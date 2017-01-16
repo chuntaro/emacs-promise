@@ -4,7 +4,7 @@ Promises/A+ for Emacs
 This is a simple implementation of Promises/A+.  
 
 This implementation ported the following Promises/A+ implementation faithfully.  
-https://github.com/then/promise/blob/master/src/core.js
+https://github.com/then/promise
 
 * The same API as JavaScript version Promise can be used.
  * then, catch, resolve, reject, all, race, etc...

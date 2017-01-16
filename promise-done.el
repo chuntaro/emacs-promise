@@ -20,8 +20,8 @@
 
 ;;; Commentary:
 
-;; This implementation ported the following `Promise' implementation faithfully.
-;; https://github.com/then/promise
+;; This implementation ported the following implementation faithfully.
+;; https://github.com/then/promise/blob/master/src/done.js
 
 ;;; Code:
 

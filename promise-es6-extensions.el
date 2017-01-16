@@ -20,8 +20,8 @@
 
 ;;; Commentary:
 
-;; This implementation ported the following `Promise' implementation faithfully.
-;; https://github.com/then/promise
+;; This implementation ported the following implementation faithfully.
+;; https://github.com/then/promise/blob/master/src/es6-extensions.js
 ;;
 ;; This file contains the ES6 extensions to the core Promises/A+ API.
 ;; (promise-resolve value)

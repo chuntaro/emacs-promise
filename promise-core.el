@@ -20,7 +20,7 @@
 
 ;;; Commentary:
 
-;; This implementation ported the following `Promise' implementation faithfully.
+;; This implementation ported the following Promises/A+ implementation faithfully.
 ;; https://github.com/then/promise/blob/master/src/core.js
 ;;
 ;; This file contains the core Promises/A+ API.
