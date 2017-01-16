@@ -3,6 +3,9 @@
 ;; Copyright (C) 2016  chuntaro
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
+;; URL: https://github.com/chuntaro/emacs-promise
+;; Package-Requires: ((emacs "25"))
+;; Version: 1.0
 ;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
