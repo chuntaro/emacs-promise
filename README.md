@@ -15,7 +15,7 @@ https://github.com/then/promise
 Usage
 -----
 
-See ![promise-examples.el](https://github.com/chuntaro/emacs-promise/blob/master/promise-examples.el) for details.
+See [promise-examples.el](https://github.com/chuntaro/emacs-promise/blob/master/promise-examples.el) for details.
 
 
 ```emacs-lisp
