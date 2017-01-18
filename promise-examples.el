@@ -1,6 +1,6 @@
 ;;; promise-examples.el --- Examples using `promise.el'.  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016  chuntaro
+;; Copyright (C) 2016-2017  chuntaro
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
