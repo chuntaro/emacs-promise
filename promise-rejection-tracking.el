@@ -48,6 +48,8 @@
 ;; This implementation ported the following implementation faithfully.
 ;; https://github.com/then/promise/blob/master/src/rejection-tracking.js
 
+;; TODO: Display easy-to-read backtrace
+
 ;;; Code:
 
 (require 'promise-core)
