@@ -126,21 +126,18 @@ as below.
                        (args (cdr sexp)))
                    (cl-case fn
                      (promise-new
-                      (list 'setf 'promise sexp))
+                      `(setf promise ,@sexp))
                      ((promise-then
                        promise-catch
                        promise-done
                        promise-finally)
-                      (list 'setf 'promise (cl-list* fn 'promise args)))
+                      `(setf promise (,fn promise ,@args)))
                      (then
-                      (list 'setf 'promise
-                            (cl-list* 'promise-then 'promise args)))
+                      `(setf promise (promise-then promise ,@args)))
                      (done
-                      (list 'setf 'promise
-                            (cl-list* 'promise-done 'promise args)))
+                      `(setf promise (promise-done promise ,@args)))
                      (finally
-                      (list 'setf 'promise
-                            (cl-list* 'promise-finally 'promise args)))
+                      `(setf promise (promise-finally promise ,@args)))
                      (otherwise
                       sexp))))
                (cdr body))))
