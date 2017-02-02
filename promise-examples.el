@@ -28,7 +28,7 @@
 ;; To execute this, move the point after the last parenthesis of the following
 ;; Lisp code and press C-x C-e. (Launch the new Emacs and run (launcher))
 ;;
-;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q" "-L" default-directory "-l" "promise-examples" "--execute" "(launcher)")
+;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q" "-L" default-directory "-l" (file-name-base (buffer-file-name)) "--execute" "(launcher)")
 
 ;;; Code:
 
@@ -206,7 +206,7 @@
 ;; Example using `url-retrieve'
 ;;
 
-(defun xml-retrieve (url)
+(defun xml-retrieve (url)               ; Same as `promise:xml-retrieve'
   "Return `Promise' to resolve with XML object obtained by HTTP request."
   (promise-new
    (lambda (resolve reject)
@@ -229,13 +229,12 @@
                         'utf-8))
 
 (defun get-short-text-first-tag (xml tag)
-  "Abbreviate the text obtained by `get-text-first-tag'."
-  (let* ((text (get-text-first-tag xml tag))
-         (short-text (substring text 0 (min 64 (length text)))))
-    (concat short-text " ...")))
+  "Truncate the text obtained with `get-text-first-tag'."
+  (concat (truncate-string-to-width (get-text-first-tag xml tag) 64)
+          " ..."))
 
-(defun wait-seconds (seconds fn &rest args)
-  "Return `Promise' to wait a specified number of seconds."
+(defun wait-seconds (seconds fn &rest args) ; Same as `promise:run-at-time'
+  "Return `Promise' to execute the function after the specified time."
   (promise-new (lambda (resolve _reject)
                  (run-at-time seconds
                               nil
@@ -266,6 +265,8 @@
 ;;
 
 (defun make-grep-process (&rest args)
+  "Return Promise which invokes the process asynchronously
+and resolves it in the output result."
   (promise-new
    (lambda (resolve reject)
      (make-process :name "grep"
@@ -278,7 +279,8 @@
                                  (funcall reject event)))))))
 
 (defun example13 ()
-  (promise-chain (make-grep-process "make-process" "*.el")
+  "An example using `make-process'."
+  (promise-chain (make-grep-process "make-process" "promise-examples.el")
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
@@ -404,6 +406,8 @@
   "A launcher that runs each example."
   (require 'ido)
   (switch-to-buffer "*Messages*")
+  (setq inhibit-message t
+        scroll-conservatively 10000)
 
   (let (nums)
     (mapatoms
@@ -418,7 +422,6 @@
                                       nums))
             (example (intern (concat "example" num))))
        (message "***** example%s *****" num)
-       (funcall example)
-       (sit-for 1)))))
+       (funcall example)))))
 
 ;;; promise-examples.el ends here
