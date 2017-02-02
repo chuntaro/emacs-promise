@@ -142,5 +142,63 @@ as below.
                       sexp))))
                (cdr body))))
 
+;;
+;; Promise version of various utility functions
+;;
+
+(require 'url-http)
+
+(defun promise:run-at-time (time function &rest args)
+  "Return `Promise' to perform action at specified time."
+  (promise-new
+   (lambda (resolve _reject)
+     (run-at-time time nil
+                  (lambda ()
+                    (funcall resolve (apply function args)))))))
+
+(defun promise:time-out (time &optional reason)
+  "Return `Promise' to reject after specified time."
+  (promise-new
+   (lambda (_resolve reject)
+     (run-at-time time nil
+                  (lambda ()
+                    (funcall reject reason))))))
+
+(defun promise:url-retrieve (url)
+  "Return `Promise' to resolve with response body of HTTP request."
+  (promise-new
+   (lambda (resolve reject)
+     (url-retrieve url
+                   (lambda (status)
+                     ;; All errors are reliably captured and rejected with appropriate values.
+                     (if (plist-get status :error)
+                         (funcall reject (plist-get status :error))
+                       (condition-case ex
+                           (with-current-buffer (current-buffer)
+                             (if (not (url-http-parse-headers))
+                                 (funcall reject (buffer-string))
+                               (search-forward-regexp "\n\\s-*\n" nil t)
+                               (funcall resolve (buffer-substring (point) (point-max)))))
+                         (error (funcall reject ex)))))))))
+
+(require 'xml)                          ; for `xml-parse-region'
+
+(defun promise:xml-retrieve (url)
+  "Return `Promise' to resolve with XML object obtained by HTTP request."
+  (promise-new
+   (lambda (resolve reject)
+     (url-retrieve url
+                   (lambda (status)
+                     ;; All errors are reliably captured and rejected with appropriate values.
+                     (if (plist-get status :error)
+                         (funcall reject (plist-get status :error))
+                       (condition-case ex
+                           (with-current-buffer (current-buffer)
+                             (if (not (url-http-parse-headers))
+                                 (funcall reject (buffer-string))
+                               (search-forward-regexp "\n\\s-*\n" nil t)
+                               (funcall resolve (xml-parse-region))))
+                         (error (funcall reject ex)))))))))
+
 (provide 'promise)
 ;;; promise.el ends here
