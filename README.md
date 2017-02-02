@@ -1,7 +1,7 @@
 Promises/A+ for Emacs
 =====================
 
-This is a simple implementation of Promises/A+.  
+This is a simple implementation of [Promises/A+](https://promisesaplus.com/).  
 
 This implementation ported the following Promises/A+ implementation faithfully.  
 https://github.com/then/promise
@@ -12,6 +12,14 @@ https://github.com/then/promise
 * supports "Inheritance of Promise"
 * supports "rejection-tracking"
 
+For detailed tutorials on its use, see [www.promisejs.org](http://www.promisejs.org/) (JavaScript)
+
+Installation
+------------
+
+You can install from MELPA using package.el.  
+The package name is **promise**.
+
 Usage
 -----
 
@@ -19,6 +27,30 @@ See [promise-examples.el](https://github.com/chuntaro/emacs-promise/blob/master/
 
 
 ```emacs-lisp
+(require 'promise)
+
+(defun do-something-async (delay-sec value)
+  "Return `Promise' to resolve the value asynchronously."
+  (promise-new (lambda (resolve _reject)
+                 (run-at-time delay-sec
+                              nil
+                              (lambda ()
+                                (funcall resolve value))))))
+
+(defun example4 ()
+  "All processes are asynchronous Promise chain."
+  (promise-chain (do-something-async 1 33)
+    (then (lambda (result)
+            (message "first result: %s" result)
+            (do-something-async 1 (* result 2))))
+
+    (then (lambda (second-result)
+            (message "second result: %s" second-result)
+            (do-something-async 1 (* second-result 2))))
+
+    (then (lambda (third-result)
+            (message "third result: %s" third-result)))))
+
 (require 'promise)
 (require 'url-http)
 (require 'xml)
@@ -51,13 +83,12 @@ See [promise-examples.el](https://github.com/chuntaro/emacs-promise/blob/master/
                         'utf-8))
 
 (defun get-short-text-first-tag (xml tag)
-  "Abbreviate the text obtained by `get-text-first-tag'."
-  (let* ((text (get-text-first-tag xml tag))
-         (short-text (substring text 0 (min 64 (length text)))))
-    (concat short-text " ...")))
+  "Truncate the text obtained with `get-text-first-tag'."
+  (concat (truncate-string-to-width (get-text-first-tag xml tag) 64)
+          " ..."))
 
 (defun wait-seconds (seconds fn &rest args)
-  "Return `Promise' to wait a specified number of seconds."
+  "Return `Promise' to execute the function after the specified time."
   (promise-new (lambda (resolve _reject)
                  (run-at-time seconds
                               nil
