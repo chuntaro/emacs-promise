@@ -1,4 +1,4 @@
-;;; promise.el --- This is a simple implementation of Promises/A+.  -*- lexical-binding: t; -*-
+;;; promise.el --- Promises/A+ for Emacs  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016-2017  chuntaro
 
@@ -55,6 +55,33 @@
 ;; * supports "thenable"
 ;; * supports "Inheritance of Promise"
 ;; * supports "rejection-tracking"
+;;
+;; Usage:
+;; See `promise-examples.el' for details.
+;;
+;; (require 'promise)
+;;
+;; (defun do-something-async (delay-sec value)
+;;   "Return `Promise' to resolve the value asynchronously."
+;;   (promise-new (lambda (resolve _reject)
+;;                  (run-at-time delay-sec
+;;                               nil
+;;                               (lambda ()
+;;                                 (funcall resolve value))))))
+;;
+;; (defun example4 ()
+;;   "All processes are asynchronous Promise chain."
+;;   (promise-chain (do-something-async 1 33)
+;;     (then (lambda (result)
+;;             (message "first result: %s" result)
+;;             (do-something-async 1 (* result 2))))
+;;
+;;     (then (lambda (second-result)
+;;             (message "second result: %s" second-result)
+;;             (do-something-async 1 (* second-result 2))))
+;;
+;;     (then (lambda (third-result)
+;;             (message "third result: %s" third-result)))))
 
 ;;; Code:
 
@@ -66,20 +93,32 @@
   "Extract the following code...
 
     (promise-chain (promise-new ...)
-      (then (lambda (value) ...))
+      (then
+       (lambda (value)
+         ...))
 
-      (promise-catch (lambda (reason) ...))
+      (promise-catch
+       (lambda (reason)
+         ...))
 
-      (done (lambda (value) ...)))
+      (done
+       (lambda (value)
+         ...)))
 
 as below.
 
     (let ((promise (promise-new ...)))
-      (setf promise (promise-then promise (lambda (value) ...)))
+      (setf promise (promise-then promise
+                                  (lambda (value)
+                                    ...)))
 
-      (setf promise (promise-catch promise (lambda (value) ...)))
+      (setf promise (promise-catch promise
+                                   (lambda (value)
+                                     ...)))
 
-      (setf promise (promise-done promise (lambda (reason) ...))))"
+      (setf promise (promise-done promise
+                                  (lambda (reason)
+                                    ...))))"
   (declare (indent 1) (debug t))
   `(let ((promise ,(car body)))
      ,@(mapcar (lambda (sexp)
