@@ -12,7 +12,9 @@ https://github.com/then/promise
 * supports "Inheritance of Promise"
 * supports "rejection-tracking"
 
-For detailed tutorials on its use, see [www.promisejs.org](http://www.promisejs.org/) (JavaScript)
+For detailed tutorials on its use, see [www.promisejs.org](http://www.promisejs.org/) (JavaScript).
+
+*Promises/A+ for Emacs* is used in [Async/Await for Emacs](https://github.com/chuntaro/emacs-async-await), so you can use Async/Await for asynchronous programming.
 
 Installation
 ------------
@@ -50,15 +52,15 @@ See [promise-examples.el](https://github.com/chuntaro/emacs-promise/blob/master/
 
     (then (lambda (third-result)
             (message "third result: %s" third-result)))))
+```
 
+An example using `url-retrieve 'as a more complicated example.
+
+```emacs-lisp
 (require 'promise)
 (require 'url-http)
 (require 'xml)
 (require 'dom)
-
-;;
-;; Example using `url-retrieve'
-;;
 
 (defun xml-retrieve (url)
   "Return `Promise' to resolve with XML object obtained by HTTP request."
