@@ -1,4 +1,4 @@
-;;; promise.el --- Promises/A+ for Emacs  -*- lexical-binding: t; -*-
+;;; promise.el --- Promises/A+                       -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016-2017  chuntaro
 
