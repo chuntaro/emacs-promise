@@ -44,7 +44,7 @@
 ;; 実行する場合は以下の Lisp コードの最後の括弧の後ろにポイントを移動して
 ;; C-x C-e と押してください。(新しい Emacs を起動して (main) を実行します)
 ;;
-;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(main)")
+;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(main)")
 
 ;;; Code:
 

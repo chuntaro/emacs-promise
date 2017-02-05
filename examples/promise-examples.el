@@ -28,7 +28,7 @@
 ;; To execute this, move the point after the last parenthesis of the following
 ;; Lisp code and press C-x C-e. (Launch the new Emacs and run (launcher))
 ;;
-;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(launcher)")
+;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(launcher)")
 
 ;;; Code:
 
