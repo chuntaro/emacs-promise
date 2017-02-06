@@ -158,6 +158,15 @@ as below.
                   (lambda ()
                     (funcall resolve (apply function args)))))))
 
+(defun promise:delay (time &optional value)
+  "Return `Promise' to delay specified time."
+  (promise-new
+   (lambda (resolve _reject)
+     (run-at-time time
+                  nil
+                  (lambda ()
+                    (funcall resolve value))))))
+
 (defun promise:time-out (time &optional reason)
   "Return `Promise' to reject after specified time."
   (promise-new
@@ -165,6 +174,28 @@ as below.
      (run-at-time time nil
                   (lambda ()
                     (funcall reject reason))))))
+
+(defun promise:make-process (program &rest args)
+  "Generate an asynchronous process and
+return Promise to resolve in that process."
+  (promise-new
+   (lambda (resolve reject)
+     (let ((buffer (generate-new-buffer (concat " *" program "*"))))
+       (make-process :name program
+                     :buffer buffer
+                     :command (cl-list* program args)
+                     :sentinel (lambda (process event)
+                                 (if (string= event "finished\n")
+                                     (funcall resolve process)
+                                   (funcall reject event))))))))
+
+(defun promise:make-process-string (program &rest args)
+  "Generate an asynchronous process and
+return Promise to resolve with the output result."
+  (promise-chain (apply #'promise:make-process program args)
+    (then (lambda (process)
+            (with-current-buffer (process-buffer process)
+              (buffer-string))))))
 
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."

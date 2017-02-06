@@ -288,7 +288,19 @@ and resolves it in the output result."
                      (message "promise-catch: %s" reason)))))
 
 (defun example14 ()
-  (promise-chain (make-grep-process "string not in source" "promise.el")
+  "Same result as `example13'."
+  (promise-chain (promise:make-process-string
+                  "grep" "string not in source" "promise.el")
+    (then (lambda (result)
+            (message "grep result:\n%s" result)))
+
+    (promise-catch (lambda (reason)
+                     (message "promise-catch: %s" reason)))))
+
+(defun example15 ()
+  "An example when `make-process' returns an error."
+  (promise-chain (promise:make-process-string
+                  "grep" "string not in source" "promise.el")
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
@@ -312,7 +324,7 @@ and resolves it in the output result."
                            (funcall resolve (concat "[" (upcase (thenable-value this)) "]"))
                          (funcall reject "failed: thenable")))))
 
-(defun example15 ()
+(defun example16 ()
   "Thenable must be passed to `promise-resolve'."
   (promise-chain (promise-resolve (make-thenable :value "This is `thenable'"))
     (then (lambda (result)
@@ -341,7 +353,7 @@ and resolves it in the output result."
     (setf (call-count new-promise) (1+ (call-count this)))
     new-promise))
 
-(defun example16 ()
+(defun example17 ()
   (promise-chain (make-instance 'simple-logger
                                 :fn (lambda (resolve _reject)
                                       (let ((value 33))
@@ -365,7 +377,7 @@ and resolves it in the output result."
 ;; Unhandled Rejections
 ;;
 
-(defun example17 ()
+(defun example18 ()
   "An example where Promise swallows an error."
   (promise-chain (do-something-async 1 33)
     (then (lambda (result)
@@ -379,7 +391,7 @@ and resolves it in the output result."
 
 (require 'promise-rejection-tracking)
 
-(defun example18 ()
+(defun example19 ()
   "Example of `rejection-tracking'."
 
   ;; Enable `rejection-tracking'.
