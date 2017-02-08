@@ -241,20 +241,19 @@ return Promise to resolve with the output result."
 (declare-function async-start "async.el" (start-func &optional finish-func))
 (declare-function async-when-done "async.el" (proc &optional _change))
 
-(with-eval-after-load 'async
-  (defun promise:async-start (start-func &optional finish-func)
-    "Return Promise to resolve with the `async-start' return value."
-    (promise-new
-     (lambda (resolve reject)
-       (set-process-sentinel (async-start start-func
-                                          (lambda (result)
-                                            (when finish-func
-                                              (funcall finish-func result))
-                                            (funcall resolve result)))
-                             (lambda (process event)
-                               (condition-case reason
-                                   (async-when-done process event)
-                                 (error (funcall reject reason)))))))))
+(defun promise:async-start (start-func &optional finish-func)
+  "Return Promise to resolve with the `async-start' return value."
+  (promise-new
+   (lambda (resolve reject)
+     (set-process-sentinel (async-start start-func
+                                        (lambda (result)
+                                          (when finish-func
+                                            (funcall finish-func result))
+                                          (funcall resolve result)))
+                           (lambda (process event)
+                             (condition-case reason
+                                 (async-when-done process event)
+                               (error (funcall reject reason))))))))
 
 (provide 'promise)
 ;;; promise.el ends here
