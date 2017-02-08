@@ -63,6 +63,9 @@
 ;;
 ;; (require 'promise)
 ;;
+;; ;; Please be sure to enable it when developing.
+;; (promise-rejection-tracking-enable '((all-rejections . t)))
+;;
 ;; (defun do-something-async (delay-sec value)
 ;;   "Return `Promise' to resolve the value asynchronously."
 ;;   (promise-new (lambda (resolve _reject)
@@ -90,6 +93,7 @@
 (require 'promise-es6-extensions)
 (require 'promise-done)
 (require 'promise-finally)
+(require 'promise-rejection-tracking)
 
 (defmacro promise-chain (&rest body)
   "Extract the following code...
