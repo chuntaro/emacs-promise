@@ -95,6 +95,7 @@
 (require 'promise-finally)
 (require 'promise-rejection-tracking)
 
+;;;###autoload
 (defmacro promise-chain (&rest body)
   "Extract the following code...
 
