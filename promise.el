@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25"))
+;; Package-Requires: ((emacs "25") (async "20150909.2257"))
 ;; Version: 1.0
 ;; Keywords: convenience
 
