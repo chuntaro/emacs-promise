@@ -188,7 +188,7 @@ return Promise to resolve in that process."
      (let ((buffer (generate-new-buffer (concat " *" program "*"))))
        (make-process :name program
                      :buffer buffer
-                     :command (cl-list* program args)
+                     :command (cons program args)
                      :sentinel (lambda (process event)
                                  (if (string= event "finished\n")
                                      (funcall resolve process)
@@ -197,10 +197,10 @@ return Promise to resolve in that process."
 (defun promise:make-process-string (program &rest args)
   "Generate an asynchronous process and
 return Promise to resolve with the output result."
-  (promise-chain (apply #'promise:make-process program args)
-    (then (lambda (process)
-            (with-current-buffer (process-buffer process)
-              (buffer-string))))))
+  (promise-then (apply #'promise:make-process program args)
+                (lambda (process)
+                  (with-current-buffer (process-buffer process)
+                    (buffer-string)))))
 
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."
