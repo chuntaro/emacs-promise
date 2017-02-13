@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25"))
+;; Package-Requires: ((emacs "25") (async "1.9"))
 ;; Version: 1.0
 ;; Keywords: convenience
 
@@ -290,7 +290,7 @@ and resolves it in the output result."
 (defun example14 ()
   "Same result as `example13'."
   (promise-chain (promise:make-process-string
-                  "grep" "string not in source" "promise.el")
+                  "grep" "make-process" "promise-examples.el")
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
@@ -300,12 +300,33 @@ and resolves it in the output result."
 (defun example15 ()
   "An example when `make-process' returns an error."
   (promise-chain (promise:make-process-string
-                  "grep" "string not in source" "promise.el")
+                  "grep" "string not in source \\ " "promise-examples.el")
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
     (promise-catch (lambda (reason)
                      (message "promise-catch: %s" reason)))))
+
+(defun example16 ()
+  "Example using promise: async-start.
+Get the 30000th value of Fibonacci number."
+  (promise-chain (promise:async-start (lambda ()
+                                        (require 'calc-ext)
+                                        (defmath fibonacci (n)
+                                          "Calculate n-th Fibonacci number."
+                                          (let ((a 1)
+                                                (b 0)
+                                                c
+                                                (k 2))
+                                            (while (<= k n)
+                                              (setq c b
+                                                    b a
+                                                    a (+ b c)
+                                                    k (+ k 1)))
+                                            a))
+                                        (calc-eval "fibonacci(30000)")))
+    (then (lambda (result)
+            (message "fibonacci(30000) -> %s" result)))))
 
 ;;
 ;; Thenable
@@ -324,7 +345,7 @@ and resolves it in the output result."
                            (funcall resolve (concat "[" (upcase (thenable-value this)) "]"))
                          (funcall reject "failed: thenable")))))
 
-(defun example16 ()
+(defun example17 ()
   "Thenable must be passed to `promise-resolve'."
   (promise-chain (promise-resolve (make-thenable :value "This is `thenable'"))
     (then (lambda (result)
@@ -353,7 +374,7 @@ and resolves it in the output result."
     (setf (call-count new-promise) (1+ (call-count this)))
     new-promise))
 
-(defun example17 ()
+(defun example18 ()
   (promise-chain (make-instance 'simple-logger
                                 :fn (lambda (resolve _reject)
                                       (let ((value 33))
@@ -377,7 +398,7 @@ and resolves it in the output result."
 ;; Unhandled Rejections
 ;;
 
-(defun example18 ()
+(defun example19 ()
   "An example where Promise swallows an error."
   (promise-chain (do-something-async 1 33)
     (then (lambda (result)
@@ -391,7 +412,7 @@ and resolves it in the output result."
 
 (require 'promise-rejection-tracking)
 
-(defun example19 ()
+(defun example20 ()
   "Example of `rejection-tracking'."
 
   ;; Enable `rejection-tracking'.
