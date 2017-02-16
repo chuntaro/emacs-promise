@@ -243,11 +243,11 @@
   (let* ((done nil)
          (res (promise--try-call-two
                fn
-               (lambda (value)
+               (lambda (&optional value)
                  (unless done
                    (setf done t)
                    (promise--resolve promise value)))
-               (lambda (reason)
+               (lambda (&optional reason)
                  (unless done
                    (setf done t)
                    (promise--reject promise reason))))))
