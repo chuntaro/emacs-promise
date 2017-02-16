@@ -4,9 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25"))
-;; Version: 1.0
-;; Keywords: convenience
+;; Keywords: async promise convenience
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
