@@ -116,3 +116,11 @@ An example using `url-retrieve 'as a more complicated example.
       (promise-catch (lambda (reason)
                        (message "promise-catch: %s" reason))))))
 ```
+
+Tests
+-----
+
+```
+$ cask install
+$ cask exec ert-runner
+```
