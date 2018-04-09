@@ -129,8 +129,8 @@ as below.
   (declare (indent 1) (debug t))
   `(let ((promise ,(car body)))
      ,@(mapcar (lambda (sexp)
-                 (let ((fn (car sexp))
-                       (args (cdr sexp)))
+                 (let ((fn (car-safe sexp))
+                       (args (cdr-safe sexp)))
                    (cl-case fn
                      (promise-new
                       `(setf promise ,@sexp))
