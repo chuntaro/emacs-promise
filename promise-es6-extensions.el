@@ -61,7 +61,7 @@
   (ignore-errors
     (cl--generic-method-function (cl-find-method #'promise-then
                                                  '()
-                                                 '(promise-class t t)))))
+                                                 '(promise-class)))))
 
 ;; Static Functions
 
