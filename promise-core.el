@@ -71,9 +71,8 @@
     'vector)))
 
 (defun promise--is-object (obj)
-  (and (vectorp obj)
-       (or (cl-struct-p obj)
-           (eieio-object-p obj))))
+  (or (cl-struct-p obj)
+      (eieio-object-p obj)))
 
 (defsubst promise--find-then-method (obj)
   (cl-find-method #'promise-then '() (list (promise--type-of obj))))
