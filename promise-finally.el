@@ -57,7 +57,7 @@
                                 (lambda (_) value)))
                 (lambda (err)
                   (promise-then (promise-resolve (funcall f))
-                                (lambda (_) err)))))
+                                (lambda (_) (promise-error err))))))
 
 (provide 'promise-finally)
 ;;; promise-finally.el ends here
