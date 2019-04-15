@@ -57,9 +57,7 @@
     (promise-then self nil (lambda (err)
                              (run-at-time 0 nil
                                           (lambda ()
-                                            (if (listp err)
-                                                (signal (car err) (cdr err))
-                                              (error err)))))))
+                                            (signal 'error (list err)))))))
   nil)
 
 (provide 'promise-done)

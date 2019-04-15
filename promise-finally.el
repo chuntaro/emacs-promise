@@ -58,9 +58,7 @@
                 (lambda (err)
                   (promise-then (promise-resolve (funcall f))
                                 (lambda (_)
-                                  (if (consp err)
-                                      (signal (car err) (cdr err))
-                                    (error err)))))))
+                                  (promise-reject err))))))
 
 (provide 'promise-finally)
 ;;; promise-finally.el ends here
