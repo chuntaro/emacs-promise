@@ -259,6 +259,23 @@ with stdout on success and with event on error."
             (funcall resolve (apply f args))
           (error (funcall reject ex))))))))
 
+(defun promise:wrap-message (p)
+  "Wrap a promise with a result logger."
+  (promise-new
+   (lambda (resolve reject)
+     (promise-then
+      p
+      (lambda (res)
+        (message "%s: %s"
+                 (propertize "Result" 'face '(:foreground "green"))
+                 (string-trim-right res))
+        (funcall resolve res))
+      (lambda (err)
+        (message "%s: %s"
+                 (propertize "Error" 'face '(:foreground "red"))
+                 (string-trim-right err))
+        (funcall reject err))))))
+
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."
   (promise-new
