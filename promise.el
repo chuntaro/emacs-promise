@@ -201,7 +201,10 @@ with (stdout stderr) on success and with (event stdout stderr) on error."
             (stderr-pipe (make-pipe-process
                           :name (concat "*" program "-stderr-pipe*")
                           :noquery t
-                          :buffer stderr))
+                          ;; use :filter instead of :buffer, to get rid of "Process Finished" lines
+                          :filter (lambda (_ output)
+                                    (with-current-buffer stderr
+                                      (insert output)))))
             (cleanup (lambda ()
                        (delete-process stderr-pipe)
                        (kill-buffer stdout)
