@@ -249,6 +249,16 @@ with stdout on success and with event on error."
   "Run script in shell and return"
   (promise:make-process-string shell-file-name shell-command-switch script))
 
+(defun promise:make-thread (f &rest args)
+  "Create thread and return promise with result of thread."
+  (promise-new
+   (lambda (resolve reject)
+     (make-thread
+      (lambda ()
+        (condition-case ex
+            (funcall resolve (apply f args))
+          (error (funcall reject ex))))))))
+
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."
   (promise-new
