@@ -104,13 +104,16 @@
        (lambda (value)
          ...))
 
-      (promise-catch
+      (catch
        (lambda (reason)
          ...))
 
       (done
        (lambda (value)
-         ...)))
+         ...))
+
+      (finally
+       (lambda () ...))
 
 as below.
 
@@ -125,7 +128,12 @@ as below.
 
       (setf promise (promise-done promise
                                   (lambda (reason)
-                                    ...))))"
+                                    ...)))
+
+      (setf promise (promise-finally promise
+                                     (lambda ()
+                                       ...)))
+      promise)"
   (declare (indent 1) (debug t))
   `(let ((promise ,(car body)))
      ,@(mapcar (lambda (sexp)
@@ -139,6 +147,8 @@ as below.
                        promise-done
                        promise-finally)
                       `(setf promise (,fn promise ,@args)))
+                     (catch
+                      `(setf promise (promise-catch promise ,@args)))
                      (then
                       `(setf promise (promise-then promise ,@args)))
                      (done
@@ -147,7 +157,8 @@ as below.
                       `(setf promise (promise-finally promise ,@args)))
                      (otherwise
                       sexp))))
-               (cdr body))))
+               (cdr body))
+     promise))
 
 ;;
 ;; Promise version of various utility functions
