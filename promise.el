@@ -192,26 +192,58 @@ as below.
                     (funcall reject reason))))))
 
 (defun promise:make-process (program &rest args)
-  "Generate an asynchronous process and
-return Promise to resolve in that process."
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error."
   (promise-new
    (lambda (resolve reject)
-     (let ((buffer (generate-new-buffer (concat " *" program "*"))))
-       (make-process :name program
-                     :buffer buffer
-                     :command (cons program args)
-                     :sentinel (lambda (process event)
-                                 (if (string= event "finished\n")
-                                     (funcall resolve process)
-                                   (funcall reject event))))))))
+     (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
+            (stderr (generate-new-buffer (concat "*" program "-stderr*")))
+            (stderr-pipe (make-pipe-process
+                          :name (concat "*" program "-stderr-pipe*")
+                          :noquery t
+                          :buffer stderr))
+            (cleanup (lambda ()
+                       (delete-process stderr-pipe)
+                       (kill-buffer stdout)
+                       (kill-buffer stderr))))
+       (condition-case err
+           (make-process :name program
+                         :buffer stdout
+                         :command (cons program args)
+                         :stderr stderr-pipe
+                         :sentinel (lambda (process event)
+                                     (unwind-protect
+                                         (let ((stderr-str (with-current-buffer stderr (buffer-string)))
+                                               (stdout-str (with-current-buffer stdout (buffer-string))))
+                                           (if (string= event "finished\n")
+                                               (funcall resolve (list stdout-str stderr-str))
+                                             (funcall reject (list event stdout-str stderr-str))))
+                                       (funcall cleanup))))
+         (error (funcall cleanup)
+                (signal (car err) (cdr err))))))))
 
+(require 'subr-x)
+(defun promise:maybe-message (msg)
+  "Display message if non-blank"
+  (let ((m (string-trim-right msg)))
+    (when (not (string-empty-p m))
+      (message "%s" m))))
+
+(require 'seq)
 (defun promise:make-process-string (program &rest args)
-  "Generate an asynchronous process and
-return Promise to resolve with the output result."
-  (promise-then (apply #'promise:make-process program args)
-                (lambda (process)
-                  (with-current-buffer (process-buffer process)
-                    (buffer-string)))))
+  "Generate an asynchronous process and return Promise to resolve
+with stdout on success and with event on error."
+  (promise-then
+   (apply #'promise:make-process program args)
+   (lambda (res)
+     (seq-let (stdout stderr) res
+       (promise:maybe-message (propertize stderr 'face '(:foreground "yellow")))
+       stdout))
+   (lambda (err)
+     (seq-let (event stdout stderr) err
+       (promise:maybe-message (propertize stdout 'face '(:foreground "black" :background "white")))
+       (promise:maybe-message (propertize stderr 'face '(:foreground "red")))
+       (promise-reject event)))))
 
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."
