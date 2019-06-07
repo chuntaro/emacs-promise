@@ -245,6 +245,10 @@ with stdout on success and with event on error."
        (promise:maybe-message (propertize stderr 'face '(:foreground "red")))
        (promise-reject event)))))
 
+(defun promise:make-shell-command (script)
+  "Run script in shell and return"
+  (promise:make-process-string shell-file-name shell-command-switch script))
+
 (defun promise:url-retrieve (url)
   "Return `Promise' to resolve with response body of HTTP request."
   (promise-new
