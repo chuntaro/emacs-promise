@@ -294,8 +294,8 @@ and resolves it in the output result."
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
-    (promise-catch (lambda (reason)
-                     (message "promise-catch: %s" reason)))))
+    (catch (lambda (reason)
+           (message "promise-catch: %s" reason)))))
 
 (defun example15 ()
   "An example when `make-process' returns an error."
