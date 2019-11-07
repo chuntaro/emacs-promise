@@ -215,7 +215,7 @@ with (stdout stderr) on success and with (event stdout stderr) on error."
                          :buffer stdout
                          :command (cons program args)
                          :stderr stderr-pipe
-                         :sentinel (lambda (process event)
+                         :sentinel (lambda (_process event)
                                      (unwind-protect
                                          (let ((stderr-str (with-current-buffer stderr (buffer-string)))
                                                (stdout-str (with-current-buffer stdout (buffer-string))))
