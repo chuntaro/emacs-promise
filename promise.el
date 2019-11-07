@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25.1") (async "1.9"))
+;; Package-Requires: ((emacs "26.1") (async "1.9"))
 ;; Version: 1.1
 ;; Keywords: async promise convenience
 
