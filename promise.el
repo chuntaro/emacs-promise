@@ -192,7 +192,8 @@ as below.
                     (funcall reject reason))))))
 
 (defun promise:make-process (program &rest args)
-  "Generate an asynchronous process and return Promise to resolve
+  "Return `Promise' to resolve with response asynchronous process.
+Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error."
   (promise-new
    (lambda (resolve reject)
@@ -227,14 +228,15 @@ with (stdout stderr) on success and with (event stdout stderr) on error."
 
 (require 'subr-x)
 (defun promise:maybe-message (msg)
-  "Display message if non-blank"
+  "Display message if non-blank."
   (let ((m (string-trim-right msg)))
     (when (not (string-empty-p m))
       (message "%s" m))))
 
 (require 'seq)
 (defun promise:make-process-string (program &rest args)
-  "Generate an asynchronous process and return Promise to resolve
+  "Return `Promise' to resolve with generate an asynchronous process.
+Generate an asynchronous process and return Promise to resolve
 with stdout on success and with event on error."
   (promise-then
    (apply #'promise:make-process program args)
@@ -249,7 +251,7 @@ with stdout on success and with event on error."
        (promise-reject event)))))
 
 (defun promise:make-shell-command (script)
-  "Run script in shell and return"
+  "Run script in shell and return."
   (promise:make-process-string shell-file-name shell-command-switch script))
 
 (defun promise:make-thread (f &rest args)
@@ -319,7 +321,7 @@ with stdout on success and with event on error."
 (declare-function async-when-done "async.el" (proc &optional _change))
 
 (defun promise:async-start (start-func &optional finish-func)
-  "Return Promise to resolve with the `async-start' return value."
+  "Return `Promise' to resolve with the `async-start' return value."
   (promise-new
    (lambda (resolve reject)
      (set-process-sentinel (async-start start-func
