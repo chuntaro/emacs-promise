@@ -229,6 +229,13 @@ with (stdout stderr) on success and with (event stdout stderr) on error."
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error
 with stdin `buffer-string' of BUF."
+  (apply #'promise:make-process-with-string
+         `(,program ,(with-current-buffer buf (buffer-string)) ,@args)))
+
+(defun promise:make-process-with-string (program string &rest args)
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error
+with stdin `buffer-string' of BUF."
   (promise-new
    (lambda (resolve reject)
      (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
@@ -257,25 +264,10 @@ with stdin `buffer-string' of BUF."
                                                            (funcall resolve (list stdout-str stderr-str))
                                                          (funcall reject (list event stdout-str stderr-str))))
                                                    (funcall cleanup))))))
-             (with-current-buffer buf
-               (process-send-region proc (point-min) (point-max))
-               (process-send-eof proc)))
+             (process-send-string proc string)
+             (process-send-eof proc))
          (error (funcall cleanup)
                 (signal (car err) (cdr err))))))))
-
-(defun promise:make-process-with-string (program string &rest args)
-  "Generate an asynchronous process and return Promise to resolve
-with (stdout stderr) on success and with (event stdout stderr) on error
-with stdin `buffer-string' of BUF."
-  ;; reference `with-temp-buffer'
-  (let ((temp-buffer (generate-new-buffer " *temp*")))
-    (with-current-buffer temp-buffer
-      (unwind-protect
-          (progn
-            (insert (substring-no-properties string))
-            (apply #'promise:make-process-with-buffer-string `(,temp-buffer ,@args)))
-        (and (buffer-name temp-buffer)
-             (kill-buffer temp-buffer))))))
 
 (require 'subr-x)
 (defun promise:maybe-message (msg)
