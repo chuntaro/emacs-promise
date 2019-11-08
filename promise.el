@@ -195,6 +195,35 @@ as below.
   "Return `Promise' to resolve with response asynchronous process.
 Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error."
+  (apply #'promise:make-process-with-handler program nil args))
+
+(defun promise:make-process-with-buffer-string (program buf &rest args)
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error
+with stdin `buffer-string' of BUF."
+  (apply #'promise:make-process-with-handler
+         program
+         (lambda (proc)
+           (with-current-buffer buf
+             (process-send-region proc (point-min) (point-max))
+             (process-send-eof proc)))
+         args))
+
+(defun promise:make-process-with-string (program string &rest args)
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error
+with STRING as stdin."
+  (apply #'promise:make-process-with-handler
+         program
+         (lambda (proc)
+           (process-send-string proc string)
+           (process-send-eof proc))
+         args))
+
+(defun promise:make-process-with-handler (program handler &rest args)
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error.
+HANDLER is a process handler and takes one process object argument."
   (promise-new
    (lambda (resolve reject)
      (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
@@ -211,18 +240,24 @@ with (stdout stderr) on success and with (event stdout stderr) on error."
                        (kill-buffer stdout)
                        (kill-buffer stderr))))
        (condition-case err
-           (make-process :name program
-                         :buffer stdout
-                         :command (cons program args)
-                         :stderr stderr-pipe
-                         :sentinel (lambda (_process event)
-                                     (unwind-protect
-                                         (let ((stderr-str (with-current-buffer stderr (buffer-string)))
-                                               (stdout-str (with-current-buffer stdout (buffer-string))))
-                                           (if (string= event "finished\n")
-                                               (funcall resolve (list stdout-str stderr-str))
-                                             (funcall reject (list event stdout-str stderr-str))))
-                                       (funcall cleanup))))
+           (let ((proc (make-process :name program
+                                     :buffer stdout
+                                     :command (cons program args)
+                                     :stderr stderr-pipe
+                                     :sentinel (lambda (process event)
+                                                 (unwind-protect
+                                                     (let ((stderr-str (with-current-buffer stderr
+                                                                         (buffer-string)))
+                                                           (stdout-str (with-current-buffer stdout
+                                                                         (buffer-string))))
+                                                       (if (string= event "finished\n")
+                                                           (funcall resolve
+                                                                    (list stdout-str stderr-str))
+                                                         (funcall reject
+                                                                  (list event stdout-str stderr-str))))
+                                                   (funcall cleanup))))))
+             (when handler
+               (funcall handler proc)))
          (error (funcall cleanup)
                 (signal (car err) (cdr err))))))))
 
