@@ -194,48 +194,35 @@ as below.
 (defun promise:make-process (program &rest args)
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error."
-  (promise-new
-   (lambda (resolve reject)
-     (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
-            (stderr (generate-new-buffer (concat "*" program "-stderr*")))
-            (stderr-pipe (make-pipe-process
-                          :name (concat "*" program "-stderr-pipe*")
-                          :noquery t
-                          ;; use :filter instead of :buffer, to get rid of "Process Finished" lines
-                          :filter (lambda (_ output)
-                                    (with-current-buffer stderr
-                                      (insert output)))))
-            (cleanup (lambda ()
-                       (delete-process stderr-pipe)
-                       (kill-buffer stdout)
-                       (kill-buffer stderr))))
-       (condition-case err
-           (make-process :name program
-                         :buffer stdout
-                         :command (cons program args)
-                         :stderr stderr-pipe
-                         :sentinel (lambda (process event)
-                                     (unwind-protect
-                                         (let ((stderr-str (with-current-buffer stderr (buffer-string)))
-                                               (stdout-str (with-current-buffer stdout (buffer-string))))
-                                           (if (string= event "finished\n")
-                                               (funcall resolve (list stdout-str stderr-str))
-                                             (funcall reject (list event stdout-str stderr-str))))
-                                       (funcall cleanup))))
-         (error (funcall cleanup)
-                (signal (car err) (cdr err))))))))
+  (apply #'promise:make-process-with-handler program nil args))
 
 (defun promise:make-process-with-buffer-string (program buf &rest args)
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error
 with stdin `buffer-string' of BUF."
-  (apply #'promise:make-process-with-string
-         `(,program ,(with-current-buffer buf (buffer-string)) ,@args)))
+  (apply #'promise:make-process-with-handler
+         program
+         (lambda (proc)
+           (with-current-buffer buf
+             (process-send-region proc (point-min) (point-max))
+             (process-send-eof proc)))
+         args))
 
 (defun promise:make-process-with-string (program string &rest args)
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error
 with stdin `buffer-string' of BUF."
+  (apply #'promise:make-process-with-handler
+         program
+         (lambda (proc)
+           (process-send-string proc string)
+           (process-send-eof proc))
+         args))
+
+(defun promise:make-process-with-handler (program handler &rest args)
+  "Generate an asynchronous process and return Promise to resolve
+with (stdout stderr) on success and with (event stdout stderr) on error.
+HANDLER is a process handler and takes one process object argument."
   (promise-new
    (lambda (resolve reject)
      (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
@@ -258,14 +245,18 @@ with stdin `buffer-string' of BUF."
                                      :stderr stderr-pipe
                                      :sentinel (lambda (process event)
                                                  (unwind-protect
-                                                     (let ((stderr-str (with-current-buffer stderr (buffer-string)))
-                                                           (stdout-str (with-current-buffer stdout (buffer-string))))
+                                                     (let ((stderr-str (with-current-buffer stderr
+                                                                         (buffer-string)))
+                                                           (stdout-str (with-current-buffer stdout
+                                                                         (buffer-string))))
                                                        (if (string= event "finished\n")
-                                                           (funcall resolve (list stdout-str stderr-str))
-                                                         (funcall reject (list event stdout-str stderr-str))))
+                                                           (funcall resolve
+                                                                    (list stdout-str stderr-str))
+                                                         (funcall reject
+                                                                  (list event stdout-str stderr-str))))
                                                    (funcall cleanup))))))
-             (process-send-string proc string)
-             (process-send-eof proc))
+             (when handler
+               (funcall handler proc)))
          (error (funcall cleanup)
                 (signal (car err) (cdr err))))))))
 
