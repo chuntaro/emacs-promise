@@ -211,7 +211,7 @@ with stdin `buffer-string' of BUF."
 (defun promise:make-process-with-string (program string &rest args)
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error
-with stdin `buffer-string' of BUF."
+with STRING as stdin."
   (apply #'promise:make-process-with-handler
          program
          (lambda (proc)
