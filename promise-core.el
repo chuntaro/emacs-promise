@@ -184,7 +184,8 @@
                (promise--resolve .promise ret)))))))))
 
 (defun promise--resolve (self new-value)
-  "Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure"
+  "Promise Resolution Procedure.
+See: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure"
   (cl-block nil
     (when (eq new-value self)
       (cl-return (promise--reject

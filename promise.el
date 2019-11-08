@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25") (async "1.9"))
+;; Package-Requires: ((emacs "26.1") (async "1.9"))
 ;; Version: 1.1
 ;; Keywords: async promise convenience
 
@@ -192,7 +192,8 @@ as below.
                     (funcall reject reason))))))
 
 (defun promise:make-process (program &rest args)
-  "Generate an asynchronous process and return Promise to resolve
+  "Return `Promise' to resolve with response asynchronous process.
+Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error."
   (apply #'promise:make-process-with-handler program nil args))
 
@@ -211,7 +212,7 @@ with stdin `buffer-string' of BUF."
 (defun promise:make-process-with-string (program string &rest args)
   "Generate an asynchronous process and return Promise to resolve
 with (stdout stderr) on success and with (event stdout stderr) on error
-with stdin `buffer-string' of BUF."
+with STRING as stdin."
   (apply #'promise:make-process-with-handler
          program
          (lambda (proc)
@@ -262,14 +263,15 @@ HANDLER is a process handler and takes one process object argument."
 
 (require 'subr-x)
 (defun promise:maybe-message (msg)
-  "Display message if non-blank"
+  "Display message if non-blank."
   (let ((m (string-trim-right msg)))
     (when (not (string-empty-p m))
       (message "%s" m))))
 
 (require 'seq)
 (defun promise:make-process-string (program &rest args)
-  "Generate an asynchronous process and return Promise to resolve
+  "Return `Promise' to resolve with generate an asynchronous process.
+Generate an asynchronous process and return Promise to resolve
 with stdout on success and with event on error."
   (promise-then
    (apply #'promise:make-process program args)
@@ -284,7 +286,7 @@ with stdout on success and with event on error."
        (promise-reject event)))))
 
 (defun promise:make-shell-command (script)
-  "Run script in shell and return"
+  "Run script in shell and return."
   (promise:make-process-string shell-file-name shell-command-switch script))
 
 (defun promise:make-thread (f &rest args)
@@ -354,7 +356,7 @@ with stdout on success and with event on error."
 (declare-function async-when-done "async.el" (proc &optional _change))
 
 (defun promise:async-start (start-func &optional finish-func)
-  "Return Promise to resolve with the `async-start' return value."
+  "Return `Promise' to resolve with the `async-start' return value."
   (promise-new
    (lambda (resolve reject)
      (set-process-sentinel (async-start start-func
