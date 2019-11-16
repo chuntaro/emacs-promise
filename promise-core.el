@@ -78,7 +78,8 @@
   (cl-find-method #'promise-then '() (list (promise--type-of obj))))
 
 (defun promise--find-then-function (obj)
-  (cl--generic-method-function (promise--find-then-method obj)))
+  (when-let (method (promise--find-then-method obj))
+    (cl--generic-method-function method)))
 
 ;; States:
 ;;
