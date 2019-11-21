@@ -79,11 +79,10 @@
                      (if (plist-get status :error)
                          (funcall reject (plist-get status :error))
                        (condition-case ex
-                           (with-current-buffer (current-buffer)
-                             (if (not (url-http-parse-headers))
+                           (if (not (url-http-parse-headers))
                                  (funcall reject (buffer-string))
                                (search-forward-regexp "\n\\s-*\n" nil t)
-                               (funcall resolve (xml-parse-region))))
+                               (funcall resolve (xml-parse-region)))
                          (error (funcall reject ex)))))))))
 
 (defun get-first-attribute (xml tag attribute)
