@@ -54,6 +54,7 @@
 
 (require 'eieio)
 (require 'cl-lib)
+(eval-when-compile (require 'subr-x))
 
 (defun promise--asap (task)
   (run-at-time 0.001 nil task))
