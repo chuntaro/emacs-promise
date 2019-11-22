@@ -244,7 +244,7 @@ HANDLER is a process handler and takes one process object argument."
                                      :buffer stdout
                                      :command (cons program args)
                                      :stderr stderr-pipe
-                                     :sentinel (lambda (process event)
+                                     :sentinel (lambda (_process event)
                                                  (unwind-protect
                                                      (let ((stderr-str (with-current-buffer stderr
                                                                          (buffer-string)))
