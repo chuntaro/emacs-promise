@@ -1,12 +1,9 @@
-;;; promise-examples-jp.el --- Examples using `promise.el' for Japanese.  -*- lexical-binding: t; -*-
+;;; promise-examples-ja.el --- Examples using `promise.el' for Japanese.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016-2017  chuntaro
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25"))
-;; Version: 1.0
-;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -38,13 +35,13 @@
 ;;
 ;; `Promise' を使うと非同期処理をサブルーチン化したり、処理の内容をシンプルに
 ;; 書き下す事が出来るようになります。
-;; (main) 内のコードを見て、上から下へ普通に書いてある何の変哲もないコードに
+;; (promise-examples-ja--main) 内のコードを見て、上から下へ普通に書いてある何の変哲もないコードに
 ;; 見える事が `Promise' を使う目的です。
 ;;
 ;; 実行する場合は以下の Lisp コードの最後の括弧の後ろにポイントを移動して
-;; C-x C-e と押してください。(新しい Emacs を起動して (main) を実行します)
+;; C-x C-e と押してください。(新しい Emacs を起動して (promise-examples-ja--main) を実行します)
 ;;
-;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(main)")
+;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(promise-examples-ja--main)")
 
 ;;; Code:
 
@@ -53,7 +50,7 @@
 (require 'xml)
 (require 'dom)
 
-(defun wait-2sec (value)
+(defun promise-examples-ja:wait-2sec (value)
   "2秒間ウェイトする `Promise' を返す。"
   (promise-new
    (lambda (resolve _reject)
@@ -62,30 +59,7 @@
                                (message "\nwait complete: %s sec" time)
                                (funcall resolve value)))))))
 
-(defun timeout (time)
-  "指定時間後にタイムアウトする `Promise' を返す。"
-  (promise-new
-   (lambda (_resolve reject)
-     (run-at-time time nil (lambda ()
-                             (funcall reject (format "timeout: %s" time)))))))
-
-(defun xml-retrieve (url)
-  "HTTP リクエストして取得した XML オブジェクトで `resolve' する `Promise' を返す。"
-  (promise-new
-   (lambda (resolve reject)
-     (url-retrieve url
-                   (lambda (status)
-                     ;; エラーは全て確実に捕捉して適切な値で `reject' する
-                     (if (plist-get status :error)
-                         (funcall reject (plist-get status :error))
-                       (condition-case ex
-                           (if (not (url-http-parse-headers))
-                                 (funcall reject (buffer-string))
-                               (search-forward-regexp "\n\\s-*\n" nil t)
-                               (funcall resolve (xml-parse-region)))
-                         (error (funcall reject ex)))))))))
-
-(defun get-first-attribute (xml tag attribute)
+(defun promise-examples-ja--get-first-attribute (xml tag attribute)
   "XML 内の TAG と ATTR にマッチした最初の値を返す。"
   (decode-coding-string (cl-reduce (lambda (a b)
                                      (or a (xml-get-attribute-or-nil b attribute)))
@@ -93,7 +67,7 @@
                                    :initial-value nil)
                         'utf-8 t))
 
-(defun get-state-code (state)
+(defun promise-examples-ja--get-state-code (state)
   "都道府県名から都道府県コードを返す。"
   (1+ (cl-position
        state
@@ -106,27 +80,27 @@
         "熊本県" "大分県" "宮崎県" "鹿児島県" "沖縄県"]
        :test #'string=)))
 
-(defun get-text-first-tag (xml tag)
+(defun promise-examples-ja--get-text-first-tag (xml tag)
   "XML 内の TAG にマッチした最初のテキストを返す。"
   (decode-coding-string (dom-text (car (dom-by-tag xml tag)))
                         'utf-8))
 
-(defun main ()
+(defun promise-examples-ja--main ()
   (let ((postal-code "1030000")         ; 〒103-0000
         station_name)
 
     ;; 出力を確認しやすくする為に `*Messages*' バッファを表示しておく
     (switch-to-buffer "*Messages*")
 
-    ;; プロミスチェインを `xml-retrieve' から開始する
+    ;; プロミスチェインを `promise:xml-retrieve' から開始する
     (message "\n* 郵便番号(103-0000)から都道府県コードを取得する HTTP リクエスト")
-    (promise-chain (xml-retrieve (concat "http://zip.cgis.biz/xml/zip.php?zn="
+    (promise-chain (promise:xml-retrieve (concat "http://zip.cgis.biz/xml/zip.php?zn="
                                          postal-code))
       (then
        (lambda (xml)
-         (let* ((state (get-first-attribute xml 'value 'state))
-                (city (get-first-attribute xml 'value 'city))
-                (state-code (get-state-code state)))
+         (let* ((state (promise-examples-ja--get-first-attribute xml 'value 'state))
+                (city (promise-examples-ja--get-first-attribute xml 'value 'city))
+                (state-code (promise-examples-ja--get-state-code state)))
            (message " -> 都道府県コード: %s, 都道府県: %s, 市区町村: %s"
                     state-code state city)
            ;; そのまま値を返すと次の `then' に渡される
@@ -134,7 +108,7 @@
 
       ;; 次の `then' には HTTP リクエストがある為、ここで2秒間ウェイトする
       ;; もらった値はそのまま次の `then' に渡す
-      (then #'wait-2sec)
+      (then #'promise-examples-ja:wait-2sec)
 
       (then
        (lambda (state-code)
@@ -143,31 +117,31 @@
          ;; 保持する `Promise' を返す
          ;; タイムアウトと一緒に使うのが典型的な使い方
          (promise-race
-          (vector (timeout 10.0)
-                  (xml-retrieve
+          (vector (promise:time-out 10.0)
+                  (promise:xml-retrieve
                    (format "http://www.ekidata.jp/api/p/%d.xml" state-code))))))
 
       (then
        (lambda (xml)
-         (let ((line_cd (get-text-first-tag xml 'line_cd))
-               (line_name (get-text-first-tag xml 'line_name)))
+         (let ((line_cd (promise-examples-ja--get-text-first-tag xml 'line_cd))
+               (line_name (promise-examples-ja--get-text-first-tag xml 'line_name)))
            (message " -> 路線コード[0]: %s, 路線名[0]: %s" line_cd line_name)
            line_cd)))
 
-      (then #'wait-2sec)
+      (then #'promise-examples-ja:wait-2sec)
 
       (then
        (lambda (line_cd)
          (message "\n* 路線コードから駅名一覧を取得する HTTP リクエスト")
-         (xml-retrieve (format "http://www.ekidata.jp/api/l/%s.xml" line_cd))))
+         (promise:xml-retrieve (format "http://www.ekidata.jp/api/l/%s.xml" line_cd))))
 
       (then
        (lambda (xml)
-         (setf station_name (get-text-first-tag xml 'station_name))
+         (setf station_name (promise-examples-ja--get-text-first-tag xml 'station_name))
          (message " -> 駅名[0]: %s" station_name)
          station_name))
 
-      (then #'wait-2sec)
+      (then #'promise-examples-ja:wait-2sec)
 
       (then
        (lambda (station_name)
@@ -176,15 +150,15 @@
          ;; 全て保持する `Promise' を返す
          (promise-all
           (vector
-           (xml-retrieve (concat "http://wikipedia.simpleapi.net/api?keyword="
+           (promise:xml-retrieve (concat "http://wikipedia.simpleapi.net/api?keyword="
                                  (url-encode-url station_name)))
-           (xml-retrieve (concat "http://iss.ndl.go.jp/api/opensearch?title="
+           (promise:xml-retrieve (concat "http://iss.ndl.go.jp/api/opensearch?title="
                                  (url-encode-url station_name)))))))
 
       (then
        (lambda (xml-vector)
-         (let ((wikipedia (get-text-first-tag (aref xml-vector 0) 'body))
-               (title (get-text-first-tag (aref xml-vector 1) 'dc:title)))
+         (let ((wikipedia (promise-examples-ja--get-text-first-tag (aref xml-vector 0) 'body))
+               (title (promise-examples-ja--get-text-first-tag (aref xml-vector 1) 'dc:title)))
            (message " -> Wikipedia: %s" wikipedia)
            (message " -> タイトル[0]: %s" title)
            title)))
@@ -213,4 +187,5 @@
       ;; 以下の `done' を `then' に書き換えると確認出来る
       (done #'message))))
 
-;;; promise-examples-jp.el ends here
+;; (provide 'promise-examples-ja)
+;;; promise-examples-ja.el ends here
