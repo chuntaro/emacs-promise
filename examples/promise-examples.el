@@ -4,9 +4,6 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "25") (async "1.9"))
-;; Version: 1.0
-;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -26,9 +23,9 @@
 ;; This file is examples using `promise.el'.
 ;;
 ;; To execute this, move the point after the last parenthesis of the following
-;; Lisp code and press C-x C-e. (Launch the new Emacs and run (launcher))
+;; Lisp code and press C-x C-e.  (Launch the new Emacs and run (promise-examples--launcher))
 ;;
-;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(launcher)")
+;; (start-process "emacs" nil (file-truename (expand-file-name invocation-name invocation-directory)) "-Q"  "-Q" "--execute" "(package-initialize)" "-L" (concat default-directory "../") "-l" (buffer-file-name) "--execute" "(promise-examples--launcher)")
 
 ;;; Code:
 
@@ -37,15 +34,15 @@
 (require 'xml)
 (require 'dom)
 
-(defun do-something ()
+(defun promise-examples:do-something ()
   "Return `Promise' to resolve the value synchronously."
   (promise-new (lambda (resolve _reject)
                  (let ((value 33))
                    (funcall resolve value)))))
 
-(defun example1 ()
-  "Resolved Promise keeps returning the same value."
-  (let ((promise (do-something)))
+(defun promise-examples--example1 ()
+  "Resolved Promise keep returning the same value."
+  (let ((promise (promise-examples:do-something)))
     (promise-then promise
                   (lambda (value)
                     (message "Got a value: %s" value)))
@@ -54,9 +51,9 @@
                   (lambda (value)
                     (message "Got the same value again: %s" value)))))
 
-(defun example2 ()
+(defun promise-examples--example2 ()
   "Promise chain."
-  (let ((promise (do-something)))
+  (let ((promise (promise-examples:do-something)))
     (setf promise (promise-then promise
                                 (lambda (result)
                                   (message "first result: %s" result)
@@ -71,10 +68,10 @@
                                 (lambda (third-result)
                                   (message "third result: %s" third-result))))))
 
-(defun example3 ()
-  "Same result as `example2'.
+(defun promise-examples--example3 ()
+  "Same result as `promise-examples--example2'.
 `promise-chain' macro is a syntax sugar for easy writing."
-  (promise-chain (do-something)
+  (promise-chain (promise-examples:do-something)
     (then (lambda (result)
             (message "first result: %s" result)
             88))
@@ -86,46 +83,47 @@
     (then (lambda (third-result)
             (message "third result: %s" third-result)))))
 
-(defun do-something-async (delay-sec value)
-  "Return `Promise' to resolve the value asynchronously."
+(defun promise-examples:do-something-async (delay-sec value)
+  "Return `Promise' to resolve the value asynchronously.
+Resolve as VALUE after DELAY-SEC."
   (promise-new (lambda (resolve _reject)
                  (run-at-time delay-sec
                               nil
                               (lambda ()
                                 (funcall resolve value))))))
 
-(defun example4 ()
+(defun promise-examples--example4 ()
   "All processes are asynchronous Promise chain."
-  (promise-chain (do-something-async 1 33)
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
-            (do-something-async 1 (* result 2))))
+            (promise-examples:do-something-async 1 (* result 2))))
 
     (then (lambda (second-result)
             (message "second result: %s" second-result)
-            (do-something-async 1 (* second-result 2))))
+            (promise-examples:do-something-async 1 (* second-result 2))))
 
     (then (lambda (third-result)
             (message "third result: %s" third-result)))))
 
 (defvar a-dummy)
 
-(defun example5 ()
+(defun promise-examples--example5 ()
   "Catch the error."
-  (promise-chain (do-something-async 1 33)
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
             (setf a-dummy (/ 1 0)))) ; An `(arith-error)' occurs here.
 
     (then (lambda (second-result)
             (message "second result: %s" second-result)
-            (do-something-async 1 (* second-result 2)))
+            (promise-examples:do-something-async 1 (* second-result 2)))
           (lambda (reason)
             (message "catch the error: %s" reason)))))
 
-(defun example6 ()
-  "Same result as `example5'."
-  (promise-chain (do-something-async 1 33)
+(defun promise-examples--example6 ()
+  "Same result as `promise-examples--example5'."
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
             (setf a-dummy (/ 1 0)))) ; An `(arith-error)' occurs here.
@@ -134,9 +132,10 @@
           (lambda (reason)
             (message "catch the error: %s" reason)))))
 
-(defun example7 ()
-  "Same result as `example6'. `promise-catch' is a syntax sugar."
-  (promise-chain (do-something-async 1 33)
+(defun promise-examples--example7 ()
+  "Same result as `promise-examples--example6'.
+`promise-catch' is a syntax sugar."
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
             (setf a-dummy (/ 1 0)))) ; An `(arith-error)' occurs here.
@@ -144,43 +143,37 @@
     (promise-catch (lambda (reason)
                      (message "catch the error: %s" reason)))))
 
-(defun example8 ()
+(defun promise-examples--example8 ()
   "How to use `promise-race'."
-  (promise-chain (promise-race (vector (do-something-async 2 "2 seccods")
-                                       (do-something-async 1 "1 second")
-                                       (do-something-async 3 "3 secconds")))
+  (promise-chain (promise-race
+                  (vector (promise-examples:do-something-async 2 "2 seccods")
+                          (promise-examples:do-something-async 1 "1 second")
+                          (promise-examples:do-something-async 3 "3 secconds")))
     (then (lambda (result)
             (message "result: %s" result)))))
 
-(defun timeout (time)
-  "Return `Promise' which times out after the specified time."
-  (promise-new (lambda (_resolve reject)
-                 (run-at-time time
-                              nil
-                              (lambda ()
-                                (funcall reject "time out"))))))
-
-(defun example9 ()
+(defun promise-examples--example9 ()
   "How to time out using `promise-race'."
-  (promise-chain (promise-race (vector (timeout 2)
-                                       (do-something-async 3 "3 seconds")))
+  (promise-chain (promise-race (vector (promise:time-out 2 'timeout)
+                                       (promise-examples:do-something-async 3 "3 seconds")))
     (then (lambda (result)
             (message "result: %s" result)))
 
     (promise-catch (lambda (reason)
                      (message "promise-catch: %s" reason)))))
 
-(defun example10 ()
+(defun promise-examples--example10 ()
   "How to use `promise-all'."
-  (promise-chain (promise-all (vector (do-something-async 2 "2 seccods")
-                                      (do-something-async 1 "1 second")
-                                      (do-something-async 3 "3 secconds")))
+  (promise-chain (promise-all
+                  (vector (promise-examples:do-something-async 2 "2 seccods")
+                          (promise-examples:do-something-async 1 "1 second")
+                          (promise-examples:do-something-async 3 "3 secconds")))
     (then (lambda (results)
             (message "result[0]: %s" (aref results 0))
             (message "result[1]: %s" (aref results 1))
             (message "result[2]: %s" (aref results 2))))))
 
-(defun do-randomthing-async ()
+(defun promise-examples:do-randomthing-async ()
   "Return `Promise' to resolve the random value asynchronously."
   (promise-new (lambda (resolve _reject)
                  (run-at-time 1
@@ -188,9 +181,9 @@
                               (lambda ()
                                 (funcall resolve (random 100)))))))
 
-(defun example11 ()
+(defun promise-examples--example11 ()
   "Branching to `resolve' or `reject' depending on the result."
-  (promise-chain (do-randomthing-async)
+  (promise-chain (promise-examples:do-randomthing-async)
     (then (lambda (result)
             (if (>= result 50)
                 (promise-resolve (format "enough (%d >= 50)" result))
@@ -206,55 +199,31 @@
 ;; Example using `url-retrieve'
 ;;
 
-(defun xml-retrieve (url)               ; Same as `promise:xml-retrieve'
-  "Return `Promise' to resolve with XML object obtained by HTTP request."
-  (promise-new
-   (lambda (resolve reject)
-     (url-retrieve url
-                   (lambda (status)
-                     ;; All errors are reliably captured and rejected with appropriate values.
-                     (if (plist-get status :error)
-                         (funcall reject (plist-get status :error))
-                       (condition-case ex
-                           (if (not (url-http-parse-headers))
-                               (funcall reject (buffer-string))
-                             (search-forward-regexp "\n\\s-*\n" nil t)
-                             (funcall resolve (xml-parse-region)))
-                         (error (funcall reject ex)))))))))
-
-(defun get-text-first-tag (xml tag)
-  "Returns the first text that matches TAG in XML."
+(defun promise-examples--get-text-first-tag (xml tag)
+  "Return the first text that matches TAG in XML."
   (decode-coding-string (dom-text (cl-first (dom-by-tag xml tag)))
                         'utf-8))
 
-(defun get-short-text-first-tag (xml tag)
-  "Truncate the text obtained with `get-text-first-tag'."
-  (concat (truncate-string-to-width (get-text-first-tag xml tag) 64)
+(defun promise-examples--get-short-text-first-tag (xml tag)
+  "Truncate the text obtained with `promise-examples--get-text-first-tag'."
+  (concat (truncate-string-to-width (promise-examples--get-text-first-tag xml tag) 64)
           " ..."))
 
-(defun wait-seconds (seconds fn &rest args) ; Same as `promise:run-at-time'
-  "Return `Promise' to execute the function after the specified time."
-  (promise-new (lambda (resolve _reject)
-                 (run-at-time seconds
-                              nil
-                              (lambda ()
-                                (funcall resolve (apply fn args)))))))
-
-(defun example12 ()
-  "Example using `xml-retrieve'."
+(defun promise-examples--example12 ()
+  "Example using `promise:xml-retrieve'."
   (let ((wikipedia-url (concat "https://en.wikipedia.org/w/api.php"
                                "?format=xml&action=query&prop=extracts"
                                "&exintro=&explaintext=&titles=")))
     (promise-chain (promise-all
                     (vector
-                     (xml-retrieve (concat wikipedia-url (url-encode-url "GNU")))
+                     (promise:xml-retrieve (concat wikipedia-url (url-encode-url "GNU")))
                      ;; Request after 2 seconds for load reduction.
-                     (wait-seconds 2
-                                   #'xml-retrieve
+                     (promise:run-at-time 2
+                                   #'promise:xml-retrieve
                                    (concat wikipedia-url (url-encode-url "Emacs")))))
       (then (lambda (xmls)
-              (message "%s" (get-short-text-first-tag (aref xmls 0) 'extract))
-              (message "%s" (get-short-text-first-tag (aref xmls 1) 'extract))))
+              (message "%s" (promise-examples--get-short-text-first-tag (aref xmls 0) 'extract))
+              (message "%s" (promise-examples--get-short-text-first-tag (aref xmls 1) 'extract))))
 
       (promise-catch (lambda (reason)
                        (message "promise-catch: %s" reason))))))
@@ -263,7 +232,7 @@
 ;; Asynchronous Processes
 ;;
 
-(defun make-grep-process (&rest args)
+(defun promise-examples:grep-process (&rest args)
   "Return Promise which invokes the process asynchronously
 and resolves it in the output result."
   (promise-new
@@ -277,17 +246,17 @@ and resolves it in the output result."
                                      (funcall resolve (buffer-string)))
                                  (funcall reject event)))))))
 
-(defun example13 ()
+(defun promise-examples--example13 ()
   "An example using `make-process'."
-  (promise-chain (make-grep-process "make-process" "promise-examples.el")
+  (promise-chain (promise-examples:grep-process "make-process" "promise-examples.el")
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
     (promise-catch (lambda (reason)
                      (message "promise-catch: %s" reason)))))
 
-(defun example14 ()
-  "Same result as `example13'."
+(defun promise-examples--example14 ()
+  "Same result as `promise-examples--example13'."
   (promise-chain (promise:make-process-string
                   "grep" "make-process" "promise-examples.el")
     (then (lambda (result)
@@ -296,8 +265,8 @@ and resolves it in the output result."
     (catch (lambda (reason)
            (message "promise-catch: %s" reason)))))
 
-(defun example15 ()
-  "An example when `make-process' returns an error."
+(defun promise-examples--example15 ()
+  "An example when `make-process' return an error."
   (promise-chain (promise:make-process-string
                   "grep" "string not in source \\ " "promise-examples.el")
     (then (lambda (result)
@@ -306,24 +275,25 @@ and resolves it in the output result."
     (promise-catch (lambda (reason)
                      (message "promise-catch: %s" reason)))))
 
-(defun example16 ()
+(defun promise-examples--example16 ()
   "Example using promise: async-start.
 Get the 30000th value of Fibonacci number."
-  (promise-chain (promise:async-start (lambda ()
-                                        (require 'calc-ext)
-                                        (defmath fibonacci (n)
-                                          "Calculate n-th Fibonacci number."
-                                          (let ((a 1)
-                                                (b 0)
-                                                c
-                                                (k 2))
-                                            (while (<= k n)
-                                              (setq c b
-                                                    b a
-                                                    a (+ b c)
-                                                    k (+ k 1)))
-                                            a))
-                                        (calc-eval "fibonacci(30000)")))
+  (promise-chain (promise:async-start
+                  (lambda ()
+                    (require 'calc-ext)
+                    (defmath fibonacci (n)
+                      "Calculate n-th Fibonacci number."
+                      (let ((a 1)
+                            (b 0)
+                            c
+                            (k 2))
+                        (while (<= k n)
+                          (setq c b
+                                b a
+                                a (+ b c)
+                                k (+ k 1)))
+                        a))
+                    (calc-eval "fibonacci(30000)")))
     (then (lambda (result)
             (message "fibonacci(30000) -> %s" result)))))
 
@@ -339,12 +309,13 @@ Get the 30000th value of Fibonacci number."
 
 (cl-defmethod promise-then ((this thenable) &optional resolve reject)
   "The signature of this method must be the same."
-  (run-at-time 1 nil (lambda ()
-                       (if (thenable-value this)
-                           (funcall resolve (concat "[" (upcase (thenable-value this)) "]"))
-                         (funcall reject "failed: thenable")))))
+  (run-at-time
+   1 nil (lambda ()
+           (if (thenable-value this)
+               (funcall resolve (concat "[" (upcase (thenable-value this)) "]"))
+             (funcall reject "failed: thenable")))))
 
-(defun example17 ()
+(defun promise-examples--example17 ()
   "Thenable must be passed to `promise-resolve'."
   (promise-chain (promise-resolve (make-thenable :value "This is `thenable'"))
     (then (lambda (result)
@@ -357,11 +328,11 @@ Get the 30000th value of Fibonacci number."
 ;; Inheritance of Promise
 ;;
 
-(defclass simple-logger (promise-class)
+(defclass promise-examples--simple-logger (promise-class)
   ((call-count :accessor call-count :initform 0))
   :documentation "Record the number of times `promise-then' was called.")
 
-(cl-defmethod promise-then ((this simple-logger) &optional on-fulfilled on-rejected)
+(cl-defmethod promise-then ((this promise-examples--simple-logger) &optional on-fulfilled on-rejected)
   (let ((new-promise   ; `promise-then' always returns a new promise."
          (cl-call-next-method this
                               (lambda (result)
@@ -373,8 +344,8 @@ Get the 30000th value of Fibonacci number."
     (setf (call-count new-promise) (1+ (call-count this)))
     new-promise))
 
-(defun example18 ()
-  (promise-chain (make-instance 'simple-logger
+(defun promise-examples--example18 ()
+  (promise-chain (make-instance 'promise-examples--simple-logger
                                 :fn (lambda (resolve _reject)
                                       (let ((value 33))
                                         (funcall resolve value))))
@@ -397,9 +368,9 @@ Get the 30000th value of Fibonacci number."
 ;; Unhandled Rejections
 ;;
 
-(defun example19 ()
+(defun promise-examples--example19 ()
   "An example where Promise swallows an error."
-  (promise-chain (do-something-async 1 33)
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
             (setf a-dummy (/ 1 0)))) ; An `(arith-error)' occurs here.
@@ -411,7 +382,7 @@ Get the 30000th value of Fibonacci number."
 
 (require 'promise-rejection-tracking)
 
-(defun example20 ()
+(defun promise-examples--example20 ()
   "Example of `rejection-tracking'."
 
   ;; Enable `rejection-tracking'.
@@ -420,7 +391,7 @@ Get the 30000th value of Fibonacci number."
   ;; Since this has a penalty of execution speed,
   ;; it should be effective only during development.
 
-  (promise-chain (do-something-async 1 33)
+  (promise-chain (promise-examples:do-something-async 1 33)
     (then (lambda (result)
             (message "first result: %s" result)
             (setf a-dummy (/ 1 0)))) ; An `(arith-error)' occurs here.
@@ -431,11 +402,11 @@ Get the 30000th value of Fibonacci number."
             (message "second result: %s" second-result)))))
 
 ;;
-;; Launcher
+;; promise-examples--launcher
 ;;
 
-(defun launcher ()
-  "A launcher that runs each example."
+(defun promise-examples--launcher ()
+  "A launcher that run each example."
   (require 'ido)
   (switch-to-buffer "*Messages*")
   (setq inhibit-message t
@@ -446,14 +417,15 @@ Get the 30000th value of Fibonacci number."
      (lambda (x)
        (when (fboundp x)
          (let ((name (symbol-name x)))
-           (when (string-match "^example\\([0-9]+\\)$" name)
+           (when (string-match "^promise-examples--example\\([0-9]+\\)$" name)
              (push (match-string 1 name) nums))))))
     (cl-callf cl-sort nums #'< :key #'string-to-number)
     (cl-loop
      (let* ((num (ido-completing-read "What number of examples do you run?: example"
                                       nums))
-            (example (intern (concat "example" num))))
-       (message "***** example%s *****" num)
+            (example (intern (concat "promise-examples--example" num))))
+       (message "***** promise-examples--example%s *****" num)
        (funcall example)))))
 
+;; (provide 'promise-examples)
 ;;; promise-examples.el ends here
