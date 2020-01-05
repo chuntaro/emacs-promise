@@ -162,6 +162,25 @@ as below.
                (cdr body))
      promise))
 
+(defmacro promise-wait (timeout promise)
+  "Wait for asynchronous PROMISE synchronously in TIMEOUT.
+BODY is sexp include promise or something async functions.
+
+If you want to fullfill BODY, funcall 'fullfill function with value.
+If you want to reject BODY, funcall 'reject function with reason."
+  (declare (indent 1))
+  (let ((block (gensym)))
+    `(let ((fullfill (lambda (value)
+                       (ignore-errors
+                         (throw ',block `(:fullfilled ,value)))))
+           (reject (lambda (reason)
+                     (ignore-errors
+                       (throw ',block `(:rejected ,reason))))))
+       (with-timeout (,timeout '(:timeouted))
+         (catch ',block
+           ,promise
+           (while t (accept-process-output)))))))
+
 ;;
 ;; Promise version of various utility functions
 ;;
