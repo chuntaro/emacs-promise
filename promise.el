@@ -97,7 +97,9 @@
 
 ;;;###autoload
 (defmacro promise-chain (&rest body)
-  "Extract the following code...
+  "Extract BODY include then, catch, done and finally.
+
+Extract the following code...
 
     (promise-chain (promise-new ...)
       (then
@@ -167,7 +169,17 @@ as below.
 (require 'url-http)
 
 (defun promise:run-at-time (time function &rest args)
-  "Return `Promise' to perform action at specified time."
+  "Return promise to funcall FUNCTION with ARGS at specified TIME.
+
+Arguments:
+  - TIME can accept the various formats.  See `run-at-time'.
+  - FUNCTION is funcalled with ARGS.
+
+Resolve:
+  - The return value from funcalled FUNCTION.
+
+Reject:
+  - <Never rejected>"
   (promise-new
    (lambda (resolve _reject)
      (run-at-time time nil
@@ -175,7 +187,17 @@ as below.
                     (funcall resolve (apply function args)))))))
 
 (defun promise:delay (time &optional value)
-  "Return `Promise' to delay specified time."
+  "Return promise to delay specified TIME.
+
+Arguments:
+  - TIME can accept the various formats.  See `run-at-time'.
+  - VALUE is return value when resolved this function.
+
+Resolve:
+  - VALUE
+
+Reject:
+  - <Never rejected>"
   (promise-new
    (lambda (resolve _reject)
      (run-at-time time
@@ -184,7 +206,17 @@ as below.
                     (funcall resolve value))))))
 
 (defun promise:time-out (time &optional reason)
-  "Return `Promise' to reject after specified time."
+  "Return promise to reject after specified TIME with REASON.
+
+Arguments:
+  - TIME an accept various format.  See `run-at-time'.
+  - REASON is return value when rejected this function.
+
+Resolve:
+  - <Never resolved>
+
+Reject:
+  - REASON"
   (promise-new
    (lambda (_resolve reject)
      (run-at-time time nil
@@ -192,15 +224,25 @@ as below.
                     (funcall reject reason))))))
 
 (defun promise:make-process (program &rest args)
-  "Return `Promise' to resolve with response asynchronous process.
-Generate an asynchronous process and return Promise to resolve
-with (stdout stderr) on success and with (event stdout stderr) on error."
+  "Return promise to make new asynchronous PROGRAM with ARGS.
+
+Arguments:
+  - PROGRAM is program name as string.
+  - ARGS is shell arguments list of string.
+
+See `promise:make-process-with-handler' for Resolve and Reject sections."
   (apply #'promise:make-process-with-handler program nil args))
 
 (defun promise:make-process-with-buffer-string (program buf &rest args)
-  "Generate an asynchronous process and return Promise to resolve
-with (stdout stderr) on success and with (event stdout stderr) on error
-with stdin `buffer-string' of BUF."
+  "Return promise to make new asynchronous PROGRAM with ARGS.
+
+Arguments:
+  - PROGRAM is program name as string.
+  - ARGS is shell arguments list of string.
+  - BUF is buffer, a format that can be accepted by `with-current-buffer'.
+    `buffer-string' of BUF is sent with EOF after process has been invoked.
+
+See `promise:make-process-with-handler' for Resolve and Reject sections."
   (apply #'promise:make-process-with-handler
          program
          (lambda (proc)
@@ -210,9 +252,14 @@ with stdin `buffer-string' of BUF."
          args))
 
 (defun promise:make-process-with-string (program string &rest args)
-  "Generate an asynchronous process and return Promise to resolve
-with (stdout stderr) on success and with (event stdout stderr) on error
-with STRING as stdin."
+  "Return promise to make new asynchronous PROGRAM with ARGS.
+
+Arguments:
+  - PROGRAM is program name as string.
+  - ARGS is shell arguments list of string.
+  - STRING is sent with EOF after process has been invoked.
+
+See `promise:make-process-with-handler' for Resolve and Reject sections."
   (apply #'promise:make-process-with-handler
          program
          (lambda (proc)
@@ -221,9 +268,21 @@ with STRING as stdin."
          args))
 
 (defun promise:make-process-with-handler (program handler &rest args)
-  "Generate an asynchronous process and return Promise to resolve
-with (stdout stderr) on success and with (event stdout stderr) on error.
-HANDLER is a process handler and takes one process object argument."
+  "Return promise to make new asynchronous PROGRAM with ARGS.
+
+Arguments:
+  - PROGRAM is program name as string.
+  - ARGS is shell arguments list of string.
+  - HANDLER is function, called with process object after program is invoked.
+
+Resolve:
+  - A list like as (stdout stderr) when process finish with exitcode 0.
+    stdout and stderr are string.
+
+Reject:
+  - A list like as (event stdout stderr) when process doesn't finish exitcode 0.
+    event, stdout and stderr are string.
+    The event is documented at https://www.gnu.org/software/emacs/manual/html_node/elisp/Sentinels.html"
   (promise-new
    (lambda (resolve reject)
      (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
@@ -263,16 +322,25 @@ HANDLER is a process handler and takes one process object argument."
 
 (require 'subr-x)
 (defun promise:maybe-message (msg)
-  "Display message if non-blank."
+  "Display MSG if non-blank."
   (let ((m (string-trim-right msg)))
     (when (not (string-empty-p m))
       (message "%s" m))))
 
 (require 'seq)
 (defun promise:make-process-string (program &rest args)
-  "Return `Promise' to resolve with generate an asynchronous process.
-Generate an asynchronous process and return Promise to resolve
-with stdout on success and with event on error."
+  "Return promise to make new asynchronous PROGRAM with ARGS.
+
+Arguments:
+  - PROGRAM is program name as string.
+  - ARGS is shell arguments list of string.
+
+Resolve:
+  - Process stdout as string when process finish with exitcode 0.
+
+Reject:
+  - Event as string represented process exit state.
+    The event is documented at https://www.gnu.org/software/emacs/manual/html_node/elisp/Sentinels.html"
   (promise-then
    (apply #'promise:make-process program args)
    (lambda (res)
@@ -286,25 +354,48 @@ with stdout on success and with event on error."
        (promise-reject event)))))
 
 (defun promise:make-shell-command (script)
-  "Run script in shell and return."
+  "Return promise to make new asynchronous shell SCRIPT.
+
+Arguments:
+  - SCRIPT is string, will be passed sh -c.
+
+See `promise:make-process-string' for Resolve and Reject sections."
   (promise:make-process-string shell-file-name shell-command-switch script))
 
-(defun promise:make-thread (f &rest args)
-  "Create thread and return promise with result of thread."
+(defun promise:make-thread (function &rest args)
+  "Return promise to make new thread via `make-thread'.
+
+Arguments:
+  - FUNCTION is funcalled with ARGS in new thread.
+
+Resolve:
+  - Return value from funcalled FUNCTION in the thread.
+
+Reject:
+  - Error object while running in the thread."
   (promise-new
    (lambda (resolve reject)
      (make-thread
       (lambda ()
-        (condition-case ex
-            (funcall resolve (apply f args))
-          (error (funcall reject ex))))))))
+        (condition-case err
+            (funcall resolve (apply function args))
+          (error (funcall reject err))))))))
 
-(defun promise:wrap-message (p)
-  "Wrap a promise with a result logger."
+(defun promise:wrap-message (promise)
+  "Return promise to show debug message after PROMISE resolved.
+
+Arguments:
+  - PROMISE is any promise object.
+
+Resolve:
+  - Return original return value when PROMISE resolved.
+
+Reject:
+  - Return original return value when PROMISE rejected."
   (promise-new
    (lambda (resolve reject)
      (promise-then
-      p
+      promise
       (lambda (res)
         (message "%s: %s"
                  (propertize "Result" 'face '(:foreground "green"))
@@ -317,7 +408,16 @@ with stdout on success and with event on error."
         (funcall reject err))))))
 
 (defun promise:url-retrieve (url)
-  "Return `Promise' to resolve with response body of HTTP request."
+  "Return promise to retrieve response body from URL.
+
+Arguments:
+  - URL is either a string or a parsed URL.  See `url-retrieve'.
+
+Resolve:
+  - Response body as a string retrieved from the URL.
+
+Reject:
+  - Error object while retrieving URL."
   (promise-new
    (lambda (resolve reject)
      (url-retrieve url
@@ -325,17 +425,26 @@ with stdout on success and with event on error."
                      ;; All errors are reliably captured and rejected with appropriate values.
                      (if (plist-get status :error)
                          (funcall reject (plist-get status :error))
-                       (condition-case ex
+                       (condition-case err
                            (if (not (url-http-parse-headers))
                                (funcall reject (buffer-string))
                              (search-forward-regexp "\n\\s-*\n" nil t)
                              (funcall resolve (buffer-substring (point) (point-max))))
-                         (error (funcall reject ex)))))))))
+                         (error (funcall reject err)))))))))
 
 (require 'xml)                          ; for `xml-parse-region'
 
 (defun promise:xml-retrieve (url)
-  "Return `Promise' to resolve with XML object obtained by HTTP request."
+  "Return promise to retrieve XML object parsed from contents from URL.
+
+Arguments:
+  - URL is either a string or a parsed URL.  See `url-retrieve'.
+
+Resolve:
+  - XML object parsed by `xml-parse-region'.
+
+Reject:
+  - Error object while retrieving URL and parsing contents."
   (promise-new
    (lambda (resolve reject)
      (url-retrieve url
@@ -343,18 +452,28 @@ with stdout on success and with event on error."
                      ;; All errors are reliably captured and rejected with appropriate values.
                      (if (plist-get status :error)
                          (funcall reject (plist-get status :error))
-                       (condition-case ex
+                       (condition-case err
                            (if (not (url-http-parse-headers))
                                (funcall reject (buffer-string))
                              (search-forward-regexp "\n\\s-*\n" nil t)
                              (funcall resolve (xml-parse-region)))
-                         (error (funcall reject ex)))))))))
+                         (error (funcall reject err)))))))))
 
 (declare-function async-start "async.el" (start-func &optional finish-func))
 (declare-function async-when-done "async.el" (proc &optional _change))
 
 (defun promise:async-start (start-func &optional finish-func)
-  "Return `Promise' to resolve with the `async-start' return value."
+  "Return promise to eval function in a new Emacs process via `async-start'.
+
+Arguments:
+  - START-FUNC is function that will be evaled in new Emacs.
+  - FINISH-FUNC is function that will be evaled after START-FUNC evaled.
+
+Resolve:
+  - Return value from START-FUNC in the Emacs.
+
+Reject:
+  - Error object while evaluating START-FUNC and FINISH-FUNC."
   (promise-new
    (lambda (resolve reject)
      (set-process-sentinel (async-start start-func
