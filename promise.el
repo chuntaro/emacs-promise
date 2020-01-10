@@ -180,6 +180,7 @@ Resolve:
 
 Reject:
   - <Never rejected>"
+  (declare (indent 1))
   (promise-new
    (lambda (resolve _reject)
      (run-at-time time nil
@@ -198,6 +199,7 @@ Resolve:
 
 Reject:
   - <Never rejected>"
+  (declare (indent 1))
   (promise-new
    (lambda (resolve _reject)
      (run-at-time time
@@ -217,6 +219,7 @@ Resolve:
 
 Reject:
   - REASON"
+  (declare (indent 1))
   (promise-new
    (lambda (_resolve reject)
      (run-at-time time nil
@@ -502,6 +505,7 @@ Reject:
 
 Timeout:
   - Return (:timeouted)."
+  (declare (indent 1))
   (catch 'done
     (let* (handled
            (timer (run-at-time timeout nil
