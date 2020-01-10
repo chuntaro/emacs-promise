@@ -233,7 +233,7 @@ Arguments:
 See `promise:make-process-with-handler' for Resolve and Reject sections."
   (apply #'promise:make-process-with-handler program nil args))
 
-(defun promise:make-process-with-buffer-string (program buf &rest args)
+(defun promise:make-process-send-buffer (program buf &rest args)
   "Return promise to make new asynchronous PROGRAM with ARGS.
 
 Arguments:
@@ -251,7 +251,7 @@ See `promise:make-process-with-handler' for Resolve and Reject sections."
              (process-send-eof proc)))
          args))
 
-(defun promise:make-process-with-string (program string &rest args)
+(defun promise:make-process-send-string (program string &rest args)
   "Return promise to make new asynchronous PROGRAM with ARGS.
 
 Arguments:
@@ -266,6 +266,9 @@ See `promise:make-process-with-handler' for Resolve and Reject sections."
            (process-send-string proc string)
            (process-send-eof proc))
          args))
+
+(define-obsolete-function-alias 'promise:make-process-with-buffer-string 'promise:make-process-send-buffer)
+(define-obsolete-function-alias 'promise:make-process-with-string 'promise:make-process-send-string)
 
 (defun promise:make-process-with-handler (program handler &rest args)
   "Return promise to make new asynchronous PROGRAM with ARGS.
