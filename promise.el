@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "25.1"))
 ;; Version: 1.1
 ;; Keywords: async promise convenience
 
@@ -381,11 +381,13 @@ Reject:
   - Error object while running in the thread."
   (promise-new
    (lambda (resolve reject)
-     (make-thread
-      (lambda ()
-        (condition-case err
-            (funcall resolve (apply function args))
-          (error (funcall reject err))))))))
+     (if (not (fboundp 'make-thread))
+         (error "`promise:make-thread' needs `make-thread' attached to Emacs-26.1 or above")
+       (make-thread
+        (lambda ()
+          (condition-case err
+              (funcall resolve (apply function args))
+            (error (funcall reject err)))))))))
 
 (defun promise:wrap-message (promise)
   "Return promise to show debug message after PROMISE resolved.
