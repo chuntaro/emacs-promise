@@ -4,7 +4,7 @@
 
 ;; Author: chuntaro <chuntaro@sakura-games.jp>
 ;; URL: https://github.com/chuntaro/emacs-promise
-;; Package-Requires: ((emacs "26.1") (async "1.9"))
+;; Package-Requires: ((emacs "26.1"))
 ;; Version: 1.1
 ;; Keywords: async promise convenience
 
@@ -474,6 +474,7 @@ Resolve:
 
 Reject:
   - Error object while evaluating START-FUNC and FINISH-FUNC."
+  (require 'async)
   (promise-new
    (lambda (resolve reject)
      (set-process-sentinel (async-start start-func
