@@ -486,5 +486,40 @@ Reject:
                                  (async-when-done process event)
                                (error (funcall reject reason))))))))
 
+(defun promise-wait (timeout promise)
+  "Return promise to wait synchronously until PROMISE is resolved or rejected or TIMEOUT.
+
+Arguments:
+  - TIMEOUT can accept the various formats.  See `run-at-time'.
+  - PROMISE is any promise object.
+
+Resolve:
+  - Return (:fullfilled value), value is PROMISE resolved value.
+
+Reject:
+  - Return (:rejected reason), reason is PROMISE rejected reason.
+
+Timeout:
+  - Return (:timeouted)."
+  (catch 'done
+    (let* (handled
+           (timer (run-at-time timeout nil
+                               (lambda ()
+                                 (unless handled
+                                   (setq handled t)
+                                   (throw 'done (promise-reject '(:timeouted))))))))
+      (promise-then promise
+                    (lambda (value)
+                      (unless handled
+                        (setq handled t)
+                        (cancel-timer timer)
+                        (throw 'done (promise-resolve `(:fullfilled ,value)))))
+                    (lambda (reason)
+                      (unless handled
+                        (setq handled t)
+                        (cancel-timer timer)
+                        (throw 'done (promise-reject `(:rejected ,reason))))))
+      (while t (accept-process-output)))))
+
 (provide 'promise)
 ;;; promise.el ends here
