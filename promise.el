@@ -96,8 +96,8 @@
 (require 'promise-rejection-tracking)
 
 ;;;###autoload
-(defmacro promise-chain (&rest body)
-  "Extract BODY include then, catch, done and finally.
+(defmacro promise-chain (promise &rest body)
+  "Extract PROMISE, BODY include then, catch, done and finally.
 
 Extract the following code...
 
@@ -137,7 +137,7 @@ as below.
                                        ...)))
       promise)"
   (declare (indent 1) (debug t))
-  `(let ((promise ,(car body)))
+  `(let ((promise ,promise))
      ,@(mapcar (lambda (sexp)
                  (let ((fn (car-safe sexp))
                        (args (cdr-safe sexp)))
@@ -159,7 +159,7 @@ as below.
                       `(setf promise (promise-finally promise ,@args)))
                      (otherwise
                       sexp))))
-               (cdr body))
+               body)
      promise))
 
 ;;
