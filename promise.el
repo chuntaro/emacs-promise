@@ -531,5 +531,13 @@ Timeout:
                         (throw 'done (promise-reject `(:rejected ,reason))))))
       (while t (accept-process-output)))))
 
+(defun promise-wait-value (promise)
+  "Return orignal value form PROMISE return value of `promise-wait'."
+  (seq-let (state value) (_value promise)
+    (cond
+     ((eq :fullfilled state) value)
+     ((eq :rejected  state) (error "Rejected: %s" (prin1-to-string value)))
+     ((eq :timeouted state) (error "Timeouted: %s" (prin1-to-string value))))))
+
 (provide 'promise)
 ;;; promise.el ends here
