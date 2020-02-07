@@ -143,7 +143,7 @@ as below.
                        (args (cdr-safe sexp)))
                    (cl-case fn
                      (promise-new
-                      `(setf promise ,@sexp))
+                      `(setf promise ,sexp))
                      ((promise-then
                        promise-catch
                        promise-done
