@@ -539,5 +539,89 @@ Timeout:
      ((eq :rejected  state) (error "Rejected: %s" (prin1-to-string value)))
      ((eq :timeouted state) (error "Timeouted: %s" (prin1-to-string value))))))
 
+(defun promise-concurrent--internal (concurrent limit promisefn &optional no-reject-immediately-p)
+  "Internal function of `promise-concurrent'.
+
+Arguments:
+  - CONCURRENT is limited number of concurrent promises.
+  - LIMIT is number of PROMISEFN executions.
+  - PROMISEFN is function should return any promise object.
+  - If NO-REJECT-IMMEDIATELY-P is non-nil, returned promise is not reject immidiately."
+  (declare (indent 2))
+  (let ((pipeline (make-vector concurrent nil))
+        (results (make-vector limit nil))
+        (count -1)
+        reasons)
+    (dotimes (i concurrent)
+      (aset pipeline i
+            (promise-new
+             (lambda (resolve reject)
+               (cl-labels
+                ((worker (inx)
+                         (if (not (< inx limit))
+                             (funcall resolve)
+                           (promise-chain (funcall promisefn inx)
+                             (then (lambda (res)
+                                     (aset results inx res)
+                                     (worker (cl-incf count))))
+                             (catch (lambda (reason)
+                                      (if (not no-reject-immediately-p)
+                                          (funcall reject reason)
+                                        (push `(,inx ,reason) reasons)
+                                        (worker (cl-incf count)))))))))
+                (worker (cl-incf count)))))))
+    (promise-chain (promise-all pipeline)
+      (then (lambda (_)
+              (if (not reasons)
+                  results
+                (promise-reject `(,results ,reasons))))))))
+
+(defun promise-concurrent (concurrent limit promisefn)
+  "Return promise to run a limited number of concurrent promises.
+
+This function returns promise which immediately rejected if one
+of promises fails.  This behavior corresponds to `promise-all'.
+See `promise-concurrent-no-reject-immidiately' with no reject immidiately.
+
+Arguments:
+  - CONCURRENT is limited number of concurrent promises.
+  - LIMIT is number of PROMISEFN executions.
+  - PROMISEFN is function should return any promise object.
+
+Resolve:
+  - Return vector includes values resolved for promise with respect to order.
+
+Reject:
+  - Return reason for the first rejection."
+  (declare (indent 2))
+  (funcall #'promise-concurrent--internal concurrent limit promisefn))
+
+(defun promise-concurrent-no-reject-immidiately (concurrent limit promisefn)
+  "Return promise to run a limited number of concurrent promises.
+
+This function returns promise which execute the whole promises if
+a promise fails.  If all promises are fulfilled, only vectors
+with resolved values are returned.  If one of promise is
+rejected, the whole promises are executed and the index and
+reason rejected as the second return value is returned after the
+whole state has been determined.  In this case, the index location
+of the first return value is nil.
+See `promise-concurrent' with reject immidiately.
+
+Arguments:
+  - CONCURRENT is limited number of concurrent promises.
+  - LIMIT is number of PROMISEFN executions.
+  - PROMISEFN is function should return any promise object.
+
+Resolve:
+  - Return vector includes values resolved for promise with respect to order.
+
+Reject:
+  - Return (<vector> <list>)
+      <vector> includes values resolved for promise with respect to order.
+      <list> is list of (index reason)."
+  (declare (indent 2))
+  (funcall #'promise-concurrent--internal concurrent limit promisefn :no-reject-immediately))
+
 (provide 'promise)
 ;;; promise.el ends here
