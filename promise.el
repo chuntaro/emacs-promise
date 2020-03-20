@@ -359,14 +359,16 @@ Reject:
        (promise:maybe-message (propertize stderr 'face '(:foreground "red")))
        (promise-reject event)))))
 
-(defun promise:make-shell-command (script)
+(defun promise:make-shell-command (script &optional dir)
   "Return promise to make new asynchronous shell SCRIPT.
 
 Arguments:
   - SCRIPT is string, will be passed sh -c.
+  - DIR is directory path in which SCRIPT will be executed.
 
 See `promise:make-process-string' for Resolve and Reject sections."
-  (promise:make-process-string shell-file-name shell-command-switch script))
+  (let ((default-directory (or dir default-directory)))
+    (promise:make-process-string shell-file-name shell-command-switch script)))
 
 (defun promise:make-thread (function &rest args)
   "Return promise to make new thread via `make-thread'.
