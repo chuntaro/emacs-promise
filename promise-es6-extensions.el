@@ -67,8 +67,8 @@
 
 (defun promise--value (value)
   (let ((p (promise-new #'ignore)))
-    (setf (_state p) 1
-          (_value p) value)
+    (setf (promise-_state p) 1
+          (promise-_value p) value)
     p))
 
 (defconst promise--t (promise--value t))
@@ -113,12 +113,12 @@
                           ((and (promise-class-p val)
                                 (eq (promise--find-then-function val)
                                     (promise--then-function)))
-                           (while (= (_state val) 3)
-                             (setf val (_value val)))
-                           (when (= (_state val) 1)
-                             (cl-return (res i (_value val))))
-                           (when (= (_state val) 2)
-                             (funcall reject (_value val)))
+                           (while (= (promise-_state val) 3)
+                             (setf val (promise-_value val)))
+                           (when (= (promise-_state val) 1)
+                             (cl-return (res i (promise-_value val))))
+                           (when (= (promise-_state val) 2)
+                             (funcall reject (promise-_value val)))
                            (promise-then val
                                          (lambda (val)
                                            (res i val))

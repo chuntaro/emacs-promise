@@ -111,17 +111,17 @@
                                         (rejections id 'display-id)))))))
       (setf promise--on-handle
             (lambda (promise)
-              (when (and (= (_state promise) 2) ; IS REJECTED
-                         (gethash (_rejection-id promise) rejections))
-                (if (rejections (_rejection-id promise) 'logged)
-                    (on-handled (_rejection-id promise))
-                  (cancel-timer (rejections (_rejection-id promise) 'timeout)))
-                (remhash (_rejection-id promise) rejections)))
+              (when (and (= (promise-_state promise) 2) ; IS REJECTED
+                         (gethash (promise-_rejection-id promise) rejections))
+                (if (rejections (promise-_rejection-id promise) 'logged)
+                    (on-handled (promise-_rejection-id promise))
+                  (cancel-timer (rejections (promise-_rejection-id promise) 'timeout)))
+                (remhash (promise-_rejection-id promise) rejections)))
             promise--on-reject
             (lambda (promise err)
-              (when (zerop (_deferred-state promise)) ; not yet handled
-                (setf (_rejection-id promise) (cl-incf id))
-                (puthash (_rejection-id promise)
+              (when (zerop (promise-_deferred-state promise)) ; not yet handled
+                (setf (promise-_rejection-id promise) (cl-incf id))
+                (puthash (promise-_rejection-id promise)
                          `((display-id . nil)
                            (error . ,err)
                            (timeout . ,(run-at-time
@@ -131,7 +131,7 @@
                                           2)
                                         nil
                                         (lambda ()
-                                          (on-unhandled (_rejection-id promise)))))
+                                          (on-unhandled (promise-_rejection-id promise)))))
                            (logged . nil))
                          rejections)))))))
 

@@ -535,7 +535,7 @@ Timeout:
 
 (defun promise-wait-value (promise)
   "Return orignal value form PROMISE return value of `promise-wait'."
-  (seq-let (state value) (_value promise)
+  (seq-let (state value) (promise-_value promise)
     (cond
      ((eq :fullfilled state) value)
      ((eq :rejected  state) (error "Rejected: %s" (prin1-to-string value)))

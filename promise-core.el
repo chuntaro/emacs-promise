@@ -114,12 +114,12 @@
            promise--is-error)))
 
 (defclass promise-class ()
-  ((_deferred-state :accessor _deferred-state :initform 0)
-   (_state          :accessor _state          :initform 0)
-   (_value          :accessor _value          :initform nil)
-   (_deferreds      :accessor _deferreds      :initform nil)
+  ((_deferred-state :accessor promise-_deferred-state :initform 0)
+   (_state          :accessor promise-_state          :initform 0)
+   (_value          :accessor promise-_value          :initform nil)
+   (_deferreds      :accessor promise-_deferreds      :initform nil)
    ;; for rejection-tracking
-   (_rejection-id   :accessor _rejection-id   :initform nil)))
+   (_rejection-id   :accessor promise-_rejection-id   :initform nil)))
 (defvar promise--on-handle nil)
 (defvar promise--on-reject nil)
 
@@ -153,34 +153,34 @@
                                                                 res))))))
 
 (defun promise--handle (self deferred)
-  (while (= (_state self) 3)
-    (setf self (_value self)))
+  (while (= (promise-_state self) 3)
+    (setf self (promise-_value self)))
   (when promise--on-handle
     (funcall promise--on-handle self))
-  (if (= (_state self) 0)
+  (if (= (promise-_state self) 0)
       (cond
-       ((= (_deferred-state self) 0)
-        (setf (_deferred-state self) 1
-              (_deferreds self) deferred))
-       ((= (_deferred-state self) 1)
-        (setf (_deferred-state self) 2
-              (_deferreds self) (list (_deferreds self)
-                                      deferred)))
+       ((= (promise-_deferred-state self) 0)
+        (setf (promise-_deferred-state self) 1
+              (promise-_deferreds self) deferred))
+       ((= (promise-_deferred-state self) 1)
+        (setf (promise-_deferred-state self) 2
+              (promise-_deferreds self) (list (promise-_deferreds self)
+                                              deferred)))
        (t
-        (setf (_deferreds self) (nconc (_deferreds self)
-                                       (list deferred)))))
+        (setf (promise-_deferreds self) (nconc (promise-_deferreds self)
+                                               (list deferred)))))
     (promise--handle-resolved self deferred)))
 
 (defun promise--handle-resolved (self deferred)
   (promise--asap
    (lambda ()
      (let-alist deferred
-       (let ((cb (if (= (_state self) 1) .on-fulfilled .on-rejected)))
+       (let ((cb (if (= (promise-_state self) 1) .on-fulfilled .on-rejected)))
          (if (not cb)
-             (if (= (_state self) 1)
-                 (promise--resolve .promise (_value self))
-               (promise--reject .promise (_value self)))
-           (let ((ret (promise--try-call-one cb (_value self))))
+             (if (= (promise-_state self) 1)
+                 (promise--resolve .promise (promise-_value self))
+               (promise--reject .promise (promise-_value self)))
+           (let ((ret (promise--try-call-one cb (promise-_value self))))
              (if (eq ret promise--is-error)
                  (promise--reject .promise promise--last-error)
                (promise--resolve .promise ret)))))))))
@@ -202,8 +202,8 @@ See: https://github.com/promises-aplus/promises-spec#the-promise-resolution-proc
         (cond
          ((and (eq then (ignore-errors (promise--find-then-function self)))
                (promise-class-p new-value))
-          (setf (_state self) 3
-                (_value self) new-value)
+          (setf (promise-_state self) 3
+                (promise-_value self) new-value)
           (promise--finale self)
           (cl-return))
          ((functionp then)
@@ -211,25 +211,25 @@ See: https://github.com/promises-aplus/promises-spec#the-promise-resolution-proc
                                  (promise-then new-value resolve reject))
                                self)
           (cl-return)))))
-    (setf (_state self) 1
-          (_value self) new-value)
+    (setf (promise-_state self) 1
+          (promise-_value self) new-value)
     (promise--finale self)))
 
 (defun promise--reject (self new-value)
-  (setf (_state self) 2
-        (_value self) new-value)
+  (setf (promise-_state self) 2
+        (promise-_value self) new-value)
   (when promise--on-reject
     (funcall promise--on-reject self new-value))
   (promise--finale self))
 
 (defun promise--finale (self)
-  (when (= (_deferred-state self) 1)
-    (promise--handle self (_deferreds self))
-    (setf (_deferreds self) nil))
-  (when (= (_deferred-state self) 2)
-    (dolist (deferred (_deferreds self))
+  (when (= (promise-_deferred-state self) 1)
+    (promise--handle self (promise-_deferreds self))
+    (setf (promise-_deferreds self) nil))
+  (when (= (promise-_deferred-state self) 2)
+    (dolist (deferred (promise-_deferreds self))
       (promise--handle self deferred))
-    (setf (_deferreds self) nil))
+    (setf (promise-_deferreds self) nil))
   nil)
 
 (defun promise--handler-new (on-fulfilled on-rejected promise)
