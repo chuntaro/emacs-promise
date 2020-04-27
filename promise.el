@@ -469,6 +469,66 @@ Reject:
                              (funcall resolve (xml-parse-region)))
                          (error (funcall reject err)))))))))
 
+(defun promise:request (url)
+  "Return promise to request URL via `request'.
+
+Arguments:
+  - URL is a target url as string.
+
+Resolve:
+  - Response body as string.
+
+Reject:
+  - A string list like as (status-code response-header response-body)"
+  (promise:request-with-args url nil))
+
+(defun promise:request-post (url data)
+  "Return promise to POST DATA to URL via `request'.
+
+Arguments:
+  - URL is a target url as string.
+  - DATA is post data alist.
+
+Resolve:
+  - Response body as string.
+
+Reject:
+  - A string list like as (status-code response-header response-body)"
+  (declare (indent 1))
+  (promise:request-with-args url `(:type "POST" :data ',data)))
+
+(defun promise:request-with-args (url arglist)
+  "Return promise to request URL via `request' with ARGLIST.
+
+Arguments:
+  - URL is a target url as string.
+
+Resolve:
+  - Response body as string.
+
+Reject:
+  - A string list like as (status-code response-header response-body)"
+  (declare (indent 1))
+
+  (require 'request)
+  (promise-new
+   (lambda (resolve reject)
+     (when (plist-get arglist :success)
+       (funcall reject "Success callback function is not customizable"))
+     (when (plist-get arglist :error)
+       (funcall reject "Error callback function is not customizable"))
+     (apply #'request url
+            :success (cl-function
+                      (lambda (&key data &allow-other-keys)
+                        (funcall resolve data)))
+            :error (cl-function
+                    (lambda (&key response &allow-other-keys)
+                      (funcall reject
+                               (list (request-response-status-code response)
+                                     (request-response--raw-header response)
+                                     (request-response-data response)))))
+            arglist))))
+
 (declare-function async-start "async.el" (start-func &optional finish-func))
 (declare-function async-when-done "async.el" (proc &optional _change))
 
