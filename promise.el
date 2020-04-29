@@ -497,6 +497,10 @@ Reject:
   (declare (indent 1))
   (promise:request-with-args url `(:type "POST" :data ',data)))
 
+(declare-function request-response-status-code "request.el" (response))
+(declare-function request-response--raw-header "request.el" (response))
+(declare-function request-response-data "request.el" (response))
+
 (defun promise:request-with-args (url arglist)
   "Return promise to request URL via `request' with ARGLIST.
 
