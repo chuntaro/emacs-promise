@@ -226,59 +226,50 @@ Reject:
                   (lambda ()
                     (funcall reject reason))))))
 
-(defun promise:make-process (program &rest args)
-  "Return promise to make new asynchronous PROGRAM with ARGS.
+(defun promise:make-process (command)
+  "Return promise to make new asynchronous COMMAND.
 
 Arguments:
-  - PROGRAM is program name as string.
-  - ARGS is shell arguments list of string.
+  - COMMAND is program and shell arguments list of string.
 
 See `promise:make-process-with-handler' for Resolve and Reject sections."
-  (apply #'promise:make-process-with-handler program nil args))
+  (funcall #'promise:make-process-with-handler command))
 
-(defun promise:make-process-send-buffer (program buf &rest args)
-  "Return promise to make new asynchronous PROGRAM with ARGS.
+(defun promise:make-process-send-buffer (command buf)
+  "Return promise to make new asynchronous COMMAND.
 
 Arguments:
-  - PROGRAM is program name as string.
-  - ARGS is shell arguments list of string.
+  - COMMAND is program and shell arguments list of string.
   - BUF is buffer, a format that can be accepted by `with-current-buffer'.
     `buffer-string' of BUF is sent with EOF after process has been invoked.
 
 See `promise:make-process-with-handler' for Resolve and Reject sections."
-  (apply #'promise:make-process-with-handler
-         program
-         (lambda (proc)
-           (with-current-buffer buf
-             (process-send-region proc (point-min) (point-max))
-             (process-send-eof proc)))
-         args))
+  (funcall #'promise:make-process-with-handler
+           command
+           (lambda (proc)
+             (with-current-buffer buf
+               (process-send-region proc (point-min) (point-max))
+               (process-send-eof proc)))))
 
-(defun promise:make-process-send-string (program string &rest args)
-  "Return promise to make new asynchronous PROGRAM with ARGS.
+(defun promise:make-process-send-string (command string)
+  "Return promise to make new asynchronous COMMAND.
 
 Arguments:
-  - PROGRAM is program name as string.
-  - ARGS is shell arguments list of string.
+  - COMMAND is program and shell arguments list of string.
   - STRING is sent with EOF after process has been invoked.
 
 See `promise:make-process-with-handler' for Resolve and Reject sections."
-  (apply #'promise:make-process-with-handler
-         program
-         (lambda (proc)
-           (process-send-string proc string)
-           (process-send-eof proc))
-         args))
+  (funcall #'promise:make-process-with-handler
+           command
+           (lambda (proc)
+             (process-send-string proc string)
+             (process-send-eof proc))))
 
-(define-obsolete-function-alias 'promise:make-process-with-buffer-string 'promise:make-process-send-buffer)
-(define-obsolete-function-alias 'promise:make-process-with-string 'promise:make-process-send-string)
-
-(defun promise:make-process-with-handler (program handler &rest args)
-  "Return promise to make new asynchronous PROGRAM with ARGS.
+(defun promise:make-process-with-handler (command &optional handler)
+  "Return promise to make new asynchronous COMMAND.
 
 Arguments:
-  - PROGRAM is program name as string.
-  - ARGS is shell arguments list of string.
+  - COMMAND is program and shell arguments list of string.
   - HANDLER is function, called with process object after program is invoked.
 
 Resolve:
@@ -291,7 +282,8 @@ Reject:
     The event is documented at https://www.gnu.org/software/emacs/manual/html_node/elisp/Sentinels.html"
   (promise-new
    (lambda (resolve reject)
-     (let* ((stdout (generate-new-buffer (concat "*" program "-stdout*")))
+     (let* ((program (car command))
+            (stdout (generate-new-buffer (concat "*" program "-stdout*")))
             (stderr (generate-new-buffer (concat "*" program "-stderr*")))
             (stderr-pipe (make-pipe-process
                           :name (concat "*" program "-stderr-pipe*")
@@ -307,7 +299,7 @@ Reject:
        (condition-case err
            (let ((proc (make-process :name program
                                      :buffer stdout
-                                     :command (cons program args)
+                                     :command command
                                      :stderr stderr-pipe
                                      :sentinel (lambda (_process event)
                                                  (unwind-protect
