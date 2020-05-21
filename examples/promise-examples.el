@@ -289,7 +289,7 @@ and resolves it in the output result."
 (defun example14 ()
   "Same result as `example13'."
   (promise-chain (promise:make-process-string
-                  "grep" "make-process" "promise-examples.el")
+                  '("grep" "make-process" "promise-examples.el"))
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
@@ -299,7 +299,7 @@ and resolves it in the output result."
 (defun example15 ()
   "An example when `make-process' returns an error."
   (promise-chain (promise:make-process-string
-                  "grep" "string not in source \\ " "promise-examples.el")
+                  '("grep" "string not in source \\ " "promise-examples.el"))
     (then (lambda (result)
             (message "grep result:\n%s" result)))
 
