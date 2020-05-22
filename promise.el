@@ -340,7 +340,7 @@ Reject:
   - Event as string represented process exit state.
     The event is documented at https://www.gnu.org/software/emacs/manual/html_node/elisp/Sentinels.html"
   (promise-then
-   (apply #'promise:make-process program args)
+   (funcall #'promise:make-process (cons program args))
    (lambda (res)
      (seq-let (stdout stderr) res
        (promise:maybe-message (propertize stderr 'face '(:foreground "yellow")))
