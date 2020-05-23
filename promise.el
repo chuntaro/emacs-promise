@@ -265,12 +265,13 @@ See `promise:make-process-with-handler' for Resolve and Reject sections."
              (process-send-string proc string)
              (process-send-eof proc))))
 
-(defun promise:make-process-with-handler (command &optional handler)
+(defun promise:make-process-with-handler (command &optional handler merge-stderr)
   "Return promise to make new asynchronous COMMAND.
 
 Arguments:
   - COMMAND is program and shell arguments list of string.
   - HANDLER is function, called with process object after program is invoked.
+  - MERGE-STDERR is boolean, whether merge stdout and stderr or not.
 
 Resolve:
   - A list like as (stdout stderr) when process finish with exitcode 0.
@@ -284,35 +285,38 @@ Reject:
    (lambda (resolve reject)
      (let* ((program (car command))
             (stdout (generate-new-buffer (concat "*" program "-stdout*")))
-            (stderr (generate-new-buffer (concat "*" program "-stderr*")))
-            (stderr-pipe (make-pipe-process
-                          :name (concat "*" program "-stderr-pipe*")
-                          :noquery t
-                          ;; use :filter instead of :buffer, to get rid of "Process Finished" lines
-                          :filter (lambda (_ output)
-                                    (with-current-buffer stderr
-                                      (insert output)))))
+            (stderr (unless merge-stderr
+                      (generate-new-buffer (concat "*" program "-stderr*"))))
+            (stderr-pipe (unless merge-stderr
+                           (make-pipe-process
+                            :name (concat "*" program "-stderr-pipe*")
+                            :noquery t
+                            ;; use :filter instead of :buffer, to get rid of "Process Finished" lines
+                            :filter (lambda (_ output)
+                                      (with-current-buffer stderr
+                                        (insert output))))))
             (cleanup (lambda ()
-                       (delete-process stderr-pipe)
                        (kill-buffer stdout)
-                       (kill-buffer stderr))))
+                       (unless merge-stderr
+                         (delete-process stderr-pipe)
+                         (kill-buffer stderr)))))
        (condition-case err
-           (let ((proc (make-process :name program
-                                     :buffer stdout
-                                     :command command
-                                     :stderr stderr-pipe
-                                     :sentinel (lambda (_process event)
-                                                 (unwind-protect
-                                                     (let ((stderr-str (with-current-buffer stderr
-                                                                         (buffer-string)))
-                                                           (stdout-str (with-current-buffer stdout
-                                                                         (buffer-string))))
-                                                       (if (string= event "finished\n")
-                                                           (funcall resolve
-                                                                    (list stdout-str stderr-str))
-                                                         (funcall reject
-                                                                  (list event stdout-str stderr-str))))
-                                                   (funcall cleanup))))))
+           (let ((proc (if merge-stderr
+                           (make-process :name program :buffer stdout :command command)
+                         (make-process :name program :buffer stdout :command command :stderr stderr-pipe))))
+             (set-process-sentinel
+              proc
+              (lambda (_process event)
+                (unwind-protect
+                    (let ((stdout-str (with-current-buffer stdout
+                                        (buffer-string)))
+                          (stderr-str (unless merge-stderr
+                                        (with-current-buffer stderr
+                                          (buffer-string)))))
+                      (if (string= event "finished\n")
+                          (funcall resolve (list stdout-str stderr-str))
+                        (funcall reject (list event stdout-str stderr-str))))
+                  (funcall cleanup))))
              (when handler
                (funcall handler proc)))
          (error (funcall cleanup)
