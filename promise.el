@@ -330,12 +330,11 @@ Reject:
       (message "%s" m))))
 
 (require 'seq)
-(defun promise:make-process-string (program &rest args)
-  "Return promise to make new asynchronous PROGRAM with ARGS.
+(defun promise:make-process-string (command)
+  "Return promise to make new asynchronous COMMAND.
 
 Arguments:
-  - PROGRAM is program name as string.
-  - ARGS is shell arguments list of string.
+  - COMMAND is program and shell arguments list of string.
 
 Resolve:
   - Process stdout as string when process finish with exitcode 0.
@@ -344,7 +343,7 @@ Reject:
   - Event as string represented process exit state.
     The event is documented at https://www.gnu.org/software/emacs/manual/html_node/elisp/Sentinels.html"
   (promise-then
-   (funcall #'promise:make-process (cons program args))
+   (funcall #'promise:make-process command)
    (lambda (res)
      (seq-let (stdout stderr) res
        (promise:maybe-message (propertize stderr 'face '(:foreground "yellow")))
