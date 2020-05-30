@@ -363,7 +363,7 @@ Arguments:
 
 See `promise:make-process-string' for Resolve and Reject sections."
   (let ((default-directory (or dir default-directory)))
-    (promise:make-process-string shell-file-name shell-command-switch script)))
+    (promise:make-process-string (list shell-file-name shell-command-switch script))))
 
 (defun promise:make-thread (function &rest args)
   "Return promise to make new thread via `make-thread'.
@@ -492,6 +492,7 @@ Reject:
   (declare (indent 1))
   (promise:request-with-args url `(:type "POST" :data ',data)))
 
+(declare-function request "request.el" (url &rest settings))
 (declare-function request-response-status-code "request.el" (response))
 (declare-function request-response--raw-header "request.el" (response))
 (declare-function request-response-data "request.el" (response))
