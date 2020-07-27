@@ -117,6 +117,14 @@ Extract the following code...
       (finally
        (lambda () ...))
 
+      ;; Anaphoric versions of `then' and `catch'.
+
+      (thena (message \"result -> %s\" result)
+             ...)
+
+      (catcha (message \"error: reason -> %s\" reason)
+              ...))
+
 as below.
 
     (let ((promise (promise-new ...)))
@@ -135,6 +143,16 @@ as below.
       (setf promise (promise-finally promise
                                      (lambda ()
                                        ...)))
+
+      (setf promise (promise-then promise
+                                  (lambda (result)
+                                    (message \"result -> %s\" result)
+                                    ...)))
+
+      (setf promise (promise-catch promise
+                                   (lambda (reason)
+                                     (message \"error: reason -> %s\" reason)
+                                     ...)))
       promise)"
   (declare (indent 1) (debug t))
   `(let ((promise ,promise))
@@ -157,6 +175,10 @@ as below.
                       `(setf promise (promise-done promise ,@args)))
                      (finally
                       `(setf promise (promise-finally promise ,@args)))
+                     (thena
+                      `(setf promise (promise-then promise (lambda (result) ,@args))))
+                     (catcha
+                      `(setf promise (promise-catch promise (lambda (reason) ,@args))))
                      (otherwise
                       sexp))))
                body)
