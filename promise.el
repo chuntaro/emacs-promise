@@ -190,6 +190,18 @@ as below.
 
 (require 'url-http)
 
+(defconst promise:t promise--t
+  "Return promise to return constant t immediately.
+
+Arguments:
+  - <None>
+
+Resolve:
+  - t
+
+Reject:
+  - <Never rejected>")
+
 (defun promise:run-at-time (time function &rest args)
   "Return promise to funcall FUNCTION with ARGS at specified TIME.
 
