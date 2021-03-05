@@ -97,8 +97,8 @@
    (t
     (promise--value value))))
 
-(defun promise-all (arr)
-  (let ((args (cl-coerce arr 'vector)))
+(defun promise-all (&rest arr)
+  (let ((args (cl-coerce (if (promise-class-p (car arr)) arr (car arr)) 'vector)))
 
     (promise-new
      (lambda (resolve reject)
