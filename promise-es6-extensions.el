@@ -71,19 +71,19 @@
           (promise-_value p) value)
     p))
 
-(defconst promise--t (promise--value t))
-(defconst promise--nil (promise--value nil))
-(defconst promise--zero (promise--value 0))
-(defconst promise--emptystring (promise--value ""))
+(defconst promise-t (promise--value t))
+(defconst promise-nil (promise--value nil))
+(defconst promise-zero (promise--value 0))
+(defconst promise-emptystring (promise--value ""))
 
 (defun promise-resolve (value)
   (cond
    ((promise-class-p value) value)
 
-   ((eq value t) promise--t)
-   ((eq value nil) promise--nil)
-   ((eq value 0) promise--zero)
-   ((eq value "") promise--emptystring)
+   ((eq value t) promise-t)
+   ((eq value nil) promise-nil)
+   ((eq value 0) promise-zero)
+   ((eq value "") promise-emptystring)
 
    ((promise--is-object value)
     (condition-case ex
