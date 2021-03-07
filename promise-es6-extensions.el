@@ -97,8 +97,8 @@
    (t
     (promise--value value))))
 
-(defun promise-all (arr)
-  (let ((args (cl-coerce arr 'vector)))
+(defun promise-all (&rest arr)
+  (let ((args (cl-coerce (if (promise-class-p (car arr)) arr (car arr)) 'vector)))
 
     (promise-new
      (lambda (resolve reject)
@@ -149,12 +149,13 @@
   (promise-new (lambda (_resolve reject)
                  (funcall reject value))))
 
-(defun promise-race (values)
-  (promise-new (lambda (resolve reject)
-                 (cl-loop for value across (cl-coerce values 'vector)
-                          do (promise-then (promise-resolve value)
-                                           resolve
-                                           reject)))))
+(defun promise-race (&rest values)
+  (let ((values* (if (promise-class-p (car values)) values (car values))))
+    (promise-new (lambda (resolve reject)
+                   (cl-loop for value across (cl-coerce values* 'vector)
+                            do (promise-then (promise-resolve value)
+                                             resolve
+                                             reject))))))
 
 (cl-defmethod promise-catch ((this promise-class) on-rejected)
   (promise-then this nil on-rejected))
